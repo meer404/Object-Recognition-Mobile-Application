@@ -152,3 +152,14 @@ _None yet. Paste one probe report per device here._
   speak attempt: whether it started, the start latency, any error, and a
   **human verdict**. Only the human verdict counts as evidence of Sorani
   intelligibility; the engine lists alone do not.
+
+## D-011 — Web platform for quick local testing only
+- **Date:** 2026-11-03 · **Phase:** 1A · **Status:** accepted (requested by author)
+- **What:** added the Flutter web platform (`web/`) so the UI and clip
+  playback can be checked with `flutter run -d chrome` without a phone.
+  The page is `lang="ckb" dir="rtl"`.
+- **Not a target platform:** the study targets Android and iOS only
+  (CLAUDE.md). In a browser, the speech probe reports the **browser's**
+  voices (e.g. Windows/Chrome voices), and ducking does not apply. The
+  report says so on its OS line, and browser results are **never** valid
+  evidence for D-009.

@@ -1,10 +1,21 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../speech/sorani_tts_selector.dart';
+
+/// OS description for the report. `dart:io` Platform throws on web, where
+/// the result describes the BROWSER's voices, not a phone's (D-011).
+String _platformDescription() {
+  if (kIsWeb) {
+    return 'WEB BROWSER on ${defaultTargetPlatform.name}: browser voices, '
+        'NOT valid as phone evidence';
+  }
+  return '${Platform.operatingSystem} ${Platform.operatingSystemVersion}';
+}
 
 /// The Sorani test sentence from CLAUDE.md ("There is a table in front of
 /// you.").
@@ -142,8 +153,7 @@ class TtsProbe {
 
     final List<String> languageList = parseLanguages(languages)..sort();
     return TtsInventory(
-      platform:
-          '${Platform.operatingSystem} ${Platform.operatingSystemVersion}',
+      platform: _platformDescription(),
       engines: <String>[
         if (engines is List<Object?>)
           for (final Object? e in engines) '$e',
