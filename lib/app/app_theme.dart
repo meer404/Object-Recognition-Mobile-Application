@@ -5,7 +5,10 @@ abstract final class AppTheme {
   /// Minimum touch target, in logical pixels (CLAUDE.md: ≥ 48 dp).
   static const double minTouchTarget = 48;
 
-  static ThemeData get dark {
+  /// Text size follows the user's system text-scale setting; no fixed factor.
+  static final ThemeData dark = _buildDark();
+
+  static ThemeData _buildDark() {
     final ColorScheme scheme = ColorScheme.fromSeed(
       seedColor: Colors.amber,
       brightness: Brightness.dark,
@@ -17,7 +20,6 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: Colors.black,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       visualDensity: VisualDensity.standard,
-      textTheme: Typography.whiteMountainView.apply(fontSizeFactor: 1.3),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(minimumSize: minSize),
       ),
