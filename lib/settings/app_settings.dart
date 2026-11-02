@@ -17,6 +17,7 @@ class AppSettings {
     this.leftRegionEnd = 1 / 3,
     this.rightRegionStart = 2 / 3,
     this.speechVolume = 1.0,
+    this.speechStartTimeout = const Duration(seconds: 3),
     this.evaluationMode = false,
   }) : assert(
          targetInferencesPerSecond >= minInferencesPerSecond &&
@@ -62,6 +63,10 @@ class AppSettings {
   /// Speech output volume, 0–1.
   final double speechVolume;
 
+  /// If a speech engine has not started within this time, the utterance is
+  /// treated as failed so a silent engine cannot block speech forever.
+  final Duration speechStartTimeout;
+
   /// When true, metrics are logged and debug overlays may be shown.
   final bool evaluationMode;
 
@@ -81,6 +86,7 @@ class AppSettings {
     double? leftRegionEnd,
     double? rightRegionStart,
     double? speechVolume,
+    Duration? speechStartTimeout,
     bool? evaluationMode,
   }) {
     return AppSettings(
@@ -95,6 +101,7 @@ class AppSettings {
       leftRegionEnd: leftRegionEnd ?? this.leftRegionEnd,
       rightRegionStart: rightRegionStart ?? this.rightRegionStart,
       speechVolume: speechVolume ?? this.speechVolume,
+      speechStartTimeout: speechStartTimeout ?? this.speechStartTimeout,
       evaluationMode: evaluationMode ?? this.evaluationMode,
     );
   }
