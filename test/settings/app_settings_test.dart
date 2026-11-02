@@ -29,6 +29,14 @@ void main() {
     test('evaluation mode is off by default (privacy)', () {
       expect(s.evaluationMode, isFalse);
     });
+
+    test('speech start timeout is set and copyWith keeps it', () {
+      expect(s.speechStartTimeout, const Duration(seconds: 3));
+      expect(
+        s.copyWith(speechVolume: 0.5).speechStartTimeout,
+        s.speechStartTimeout,
+      );
+    });
   });
 
   test('minInferenceInterval is derived from the rate', () {

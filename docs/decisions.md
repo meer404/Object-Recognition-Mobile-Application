@@ -117,6 +117,26 @@ Status values: `accepted`, `provisional` (to be confirmed in a later phase),
   completes when playback starts, so the queueing delay is included in the
   measured frame-to-speech-start latency.
 
+## D-009 — Is Sorani system TTS usable? (device results)
+- **Date:** opened 2026-11-02 · **Phase:** 1A · **Status:** OPEN, awaiting
+  real-device runs
+- **What is known without devices:** Flutter's `flutter_tts` 4.2.5 just
+  passes through whatever the OS engine reports, so it adds no Sorani
+  support of its own. The app treats only `ckb*` as Sorani. `ku` usually
+  means Kurmanji (Latin script) and is never used for Sorani text
+  (`lib/speech/sorani_tts_selector.dart`).
+- **Expectation, not evidence:** most devices will report no `ckb` voice, so
+  recorded clips stay the primary path. This entry must be decided by the
+  device results below, not by this expectation.
+- **Procedure:** debug build → home → "Speech probe (debug)" → enter the
+  device model → tap every TTS button and "Recorded clip" → rate each attempt
+  by ear (ideally by a native speaker) → "Copy Markdown report" → paste below.
+- **Decision rule:** TTS becomes an optional user setting only on devices
+  where a `ckb` attempt is rated "Understood". Otherwise it stays disabled.
+
+### Device results
+_None yet. Paste one probe report per device here._
+
 ## D-010 — Speech probe screen is debug-only and in English
 - **Date:** 2026-11-02 · **Phase:** 1A · **Status:** accepted (approved by author)
 - **What:** `lib/debug/speech_probe_screen.dart` opens from a button on the
