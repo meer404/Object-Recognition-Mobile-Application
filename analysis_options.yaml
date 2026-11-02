@@ -21,5 +21,4 @@ linter:
     - prefer_final_fields
     - prefer_final_locals
     - prefer_single_quotes
-    - require_trailing_commas
     - unawaited_futures
