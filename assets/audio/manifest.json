@@ -1,4 +1,6 @@
 {
   "version": 1,
-  "clips": {}
+  "clips": {
+    "test_sentence": "placeholder/test_sentence.wav"
+  }
 }
