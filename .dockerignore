@@ -1,0 +1,4 @@
+# The export image only needs tools/requirements-export.txt at build time;
+# the repo is bind-mounted at run time.
+*
+!tools/requirements-export.txt

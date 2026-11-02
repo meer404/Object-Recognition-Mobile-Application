@@ -1,0 +1,15 @@
+# Model export environment (Linux x86_64, Python 3.11). Used by
+# tools/docker/export.Dockerfile. Every package the exporter would otherwise
+# install at runtime is pinned here so exports are reproducible.
+# Installed AFTER torch/torchvision (CPU wheels, see the Dockerfile).
+#
+# Constraints found while pinning (2026-11-03):
+#   - litert-torch 0.10.0 requires torch<2.15  -> torch 2.14.1 / torchvision 0.29.1
+#   - coremltools path in ultralytics requires numpy<=2.3.5
+#   - ai-edge-quantizer 0.10.1 requires ai-edge-litert==2.3.0
+ultralytics==8.4.198
+numpy==2.3.5
+litert-torch==0.10.0
+ai-edge-litert==2.3.0
+ai-edge-quantizer==0.10.1
+coremltools==9.0
