@@ -82,3 +82,37 @@ Status values: `accepted`, `provisional` (to be confirmed in a later phase),
 - **Why:** these keep `CameraService` and `ObjectDetector` independent of the
   `camera` plugin types, so detectors can be tested with synthetic frames.
   They also keep user-facing text in one reviewable file.
+
+## D-007 — Audio playback stack for recorded clips
+- **Date:** 2026-11-02 · **Phase:** 1A · **Status:** accepted
+- **What:** `just_audio` 0.10.6 plays the clips and `audio_session` 0.2.4
+  configures the audio session. Versions are pinned exactly in `pubspec.yaml`
+  for reproducibility. The session is set up so speech briefly lowers other
+  audio: iOS `playback` + `duckOthers` + `spokenAudio`; Android focus
+  `gainTransientMayDuck`, content type `speech`, usage `media`. The session
+  is turned off after every utterance with `notifyOthersOnDeactivation`.
+- **Alternatives:** `audioplayers` 6.8.1, which has no built-in playlist, so
+  each clip would have to be started manually with an audible gap; Android
+  usage `assistanceAccessibility`.
+- **Why:** a built-in playlist plays the sentence pieces with almost no gap
+  between them. `just_audio` never turns the session off, and other apps stay
+  ducked until it is off, so we do it explicitly. Usage `media` means the
+  hardware volume keys control speech volume. The accessibility stream would
+  follow the separate accessibility volume, which users may not find.
+- **Measurement note:** "speech start" is the moment the player reports
+  `playing && ready`. Audio output latency on the device adds a few ms that
+  this does not capture; state that in the paper.
+- **Unverified:** whether ducking works on real devices (Phase 2 device test).
+
+## D-008 — Speech overlap rule
+- **Date:** 2026-11-02 · **Phase:** 1A · **Status:** accepted (approved by author)
+- **What:** `SpeechSerializer` is shared by all speech back-ends. Speech in
+  progress always finishes. While it plays, only the newest request waits and
+  older waiting requests are dropped. Repeat (`interrupt: true`) and `stop()`
+  cut current speech off.
+- **Alternatives:** (a) every new request interrupts at once, which cuts
+  words mid-way and is hard to follow; (b) a FIFO queue, which would announce
+  scene descriptions that are out of date.
+- **Why:** the same drop-don't-queue idea as the FrameScheduler. `speak()`
+  completes when playback starts, so the queueing delay is included in the
+  measured frame-to-speech-start latency.
