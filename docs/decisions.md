@@ -116,3 +116,19 @@ Status values: `accepted`, `provisional` (to be confirmed in a later phase),
 - **Why:** the same drop-don't-queue idea as the FrameScheduler. `speak()`
   completes when playback starts, so the queueing delay is included in the
   measured frame-to-speech-start latency.
+
+## D-010 — Speech probe screen is debug-only and in English
+- **Date:** 2026-11-02 · **Phase:** 1A · **Status:** accepted (approved by author)
+- **What:** `lib/debug/speech_probe_screen.dart` opens from a button on the
+  home screen that exists only when `kDebugMode` is true, so it is compiled
+  out of release builds. Its labels are in English.
+- **Alternatives:** Sorani labels; a hidden gesture in release builds.
+- **Why:** the only user is the researcher, and the report it produces goes
+  into this (English) log. The Sorani-only rule in CLAUDE.md covers
+  user-facing text, and end users never see this screen. Keeping it out of
+  release builds also keeps it out of the user study.
+- **What it records:** engines, default engine, every language and voice,
+  `isLanguageAvailable` for ckb/ckb-IQ/ckb-IR/ku/ku-IQ/ku-TR, and for each
+  speak attempt: whether it started, the start latency, any error, and a
+  **human verdict**. Only the human verdict counts as evidence of Sorani
+  intelligibility; the engine lists alone do not.

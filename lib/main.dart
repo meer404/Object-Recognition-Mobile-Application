@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -5,6 +6,7 @@ import 'accessibility/accessibility_controls.dart';
 import 'app/app_theme.dart';
 import 'app/sorani_localizations.dart';
 import 'app/ui_strings.dart';
+import 'debug/speech_probe_screen.dart';
 
 void main() {
   runApp(const KurdishVisionApp());
@@ -58,6 +60,22 @@ class _PlaceholderHome extends StatelessWidget {
           ),
         ),
       ),
+      // Researcher tool, compiled out of release builds (D-010).
+      bottomNavigationBar: kDebugMode
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: FilledButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const SpeechProbeScreen(),
+                    ),
+                  ),
+                  child: const Text('Speech probe (debug)'),
+                ),
+              ),
+            )
+          : null,
     );
   }
 }
