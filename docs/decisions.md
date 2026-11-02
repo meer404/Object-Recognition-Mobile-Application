@@ -163,3 +163,95 @@ _None yet. Paste one probe report per device here._
   voices (e.g. Windows/Chrome voices), and ducking does not apply. The
   report says so on its OS line, and browser results are **never** valid
   evidence for D-009.
+
+## D-012 — Model and export pipeline
+- **Date:** 2026-11-03 · **Phase:** 1B · **Status:** accepted (choice of
+  variant for the app: provisional until on-device latency in Phase 4)
+- **Model:** **YOLO26n** (`yolo26n.pt`, SHA-256 `9b09cc8b…8ad4fef`), the
+  current Ultralytics family per docs.ultralytics.com/modes/export, 2.41 M
+  parameters, 5.5 GFLOPs at 640. COCO-pretrained (80 classes); our 15–20
+  classes are chosen from these in Phase 1C.
+- **Export environment:** Ultralytics **8.4.198**. Its exporter refuses LiteRT
+  export on Windows ("only supported on Linux x86 and macOS") and Core ML
+  export on Windows, so exports run in `tools/docker/export.Dockerfile`
+  (Python 3.11.9, torch 2.14.1 CPU, litert-torch 0.10.0, ai-edge-litert 2.3.0,
+  ai-edge-quantizer 0.10.1, coremltools 9.0, numpy 2.3.5). The full resolved
+  set is in `tools/requirements-export.lock.txt`. Weights and calibration data
+  are baked into the image. Full results with hashes:
+  `docs/model_export_manifest.json` (export run at commit `97b9e1a`).
+- **Constraints found while pinning:** litert-torch 0.10.0 requires
+  torch < 2.15; Ultralytics' Core ML path requires numpy ≤ 2.3.5; LiteRT
+  cannot memory-map files on Docker Desktop's Windows bind mounts, so work
+  happens on container-local disk.
+- **Correction to the Phase 1B plan:** the `litert` exporter has **no fp16
+  option** (accepts 8 / w8a16 / w8a32 / 32 / None), so fp32 replaces fp16.
+  Android GPU delegates can still execute fp32 models at fp16 precision.
+
+### Results (fidelity vs. the .pt model; 32 coco128 images, conf 0.25, IoU 0.5)
+
+| Artifact | Size | Match rate | Extra dets | Mean \|Δconf\| |
+|---|---|---|---|---|
+| 640 fp32 | 9.97 MB | 1.000 (142/142) | 0 | 0.000 |
+| 640 w8a32 | 2.88 MB | 0.951 (135/142) | 4 | 0.020 |
+| 640 int8 | 2.93 MB | 0.887 (126/142) | 30 | 0.098 |
+| 320 fp32 | 9.89 MB | 1.000 (102/102) | 0 | 0.000 |
+| 320 w8a32 | 2.80 MB | 0.931 (95/102) | 2 | 0.022 |
+| 320 int8 | 2.91 MB | 0.853 (87/102) | 6 | 0.162 |
+| 640 / 320 Core ML (.mlpackage) | 5.07 / 5.03 MB | not run (needs macOS) | | |
+
+- Match rate measures **export damage**, not accuracy; real accuracy on our
+  own indoor test set is Phase 5. The check images also served as INT8
+  calibration data, which flatters int8 if anything.
+- **Output layout:** every TFLite export (fp32 too) and Core ML export has
+  the **raw** head `[1, 84, anchors]` (4 box + 80 class scores, channels
+  first). YOLO26's NMS-free end-to-end head is **not** preserved in these
+  exports, so **the app must run NMS** (Phase 3). Input is float32
+  **NCHW** `[1, 3, S, S]`.
+- **int8 is not reproducible:** two runs with identical inputs gave
+  640: 0.845 → 0.887 and 320: 0.833 → 0.853. Calibration is
+  nondeterministic, and only 128 calibration images were used (Ultralytics
+  recommends > 300). int8 also shifts confidences by ~0.1–0.16, which
+  matters because the app only speaks results ≥ 0.5.
+- **Decision:** int8 is set aside. **w8a32** (small, deterministic, ≥ 0.93
+  match) and **fp32** (exact) go forward. 640 vs 320 and w8a32 vs fp32 are
+  decided by on-device latency in Phase 4. The 3–5 inferences/sec target
+  decides, not this table.
+- **Licence:** Ultralytics releases YOLO26 weights under **AGPL-3.0**. A
+  distributed app using them must be AGPL-compatible open source, or needs
+  an Ultralytics Enterprise licence. To be confirmed with the supervisor.
+
+## D-013 — On-device inference plugin
+- **Date:** 2026-11-03 · **Phase:** 1B · **Status:** PROPOSED, awaiting the
+  author's decision
+- **Candidates** (pub.dev / GitHub build files, checked 2026-11-03):
+
+| | `ultralytics_yolo` 0.7.1 | `flutter_litert` 3.9.4 | `tflite_flutter` 0.12.1 |
+|---|---|---|---|
+| Maintainer | Ultralytics (official) | one developer (hugo.ml) | TensorFlow, last release 2025-10-28 |
+| Licence | AGPL-3.0 | Apache-2.0 | Apache-2.0 |
+| Android minSdk / iOS | 24 / 13.0 | 21 / 13.0 | 19 (docs say 26) / – |
+| Runtime | LiteRT 2.3 | LiteRT 1.4.2 + 2.x | LiteRT 1.4.0 |
+| Camera | its own native `YOLOView` | our `camera` stream | ours |
+| Our FrameScheduler / per-stage timing | no documented throttle or timing API | yes, we own every stage | yes |
+| Background inference | native | `IsolateInterpreter` | `IsolateInterpreter` |
+| Delegates | automatic GPU → CPU | GPU (V2), XNNPACK, Metal, Core ML | GPU, Metal, Core ML |
+| iOS model | Core ML `.mlpackage` | same `.tflite` via Core ML / Metal delegate | same `.tflite` |
+
+- **Recommendation: `flutter_litert`.** CLAUDE.md requires our own
+  FrameScheduler (drop, don't queue), an `ObjectDetector` interface and
+  per-stage timings (preprocess / inference / postprocess). `YOLOView`
+  owns the camera and the inference loop, so stages could not be measured
+  separately. `ultralytics_yolo`'s `predict(imageBytes)` takes encoded image
+  bytes, so every frame would need JPEG encoding first (unverified cost).
+  `flutter_litert` keeps the `tflite_flutter` API, bundles its native
+  runtimes, and is actively released. One `.tflite` serves both platforms,
+  which simplifies the paper's methodology.
+- **Costs of the recommendation:** we write preprocessing (YUV/BGRA →
+  NCHW float), letterboxing and NMS ourselves (Phase 3). The plugin depends
+  on one maintainer (mitigated: the API matches `tflite_flutter`, so it can
+  be swapped behind `ObjectDetector`). On iOS it uses TFLite + delegate
+  rather than the Core ML export that CLAUDE.md prefers; CLAUDE.md allows
+  TFLite "if simpler". The `.mlpackage` exports are kept in case.
+- **Not chosen, and why:** `tflite_flutter`, because its own fork describes
+  it as unmaintained, it had no release for 12 months, and its docs and
+  build file disagree on the Android minimum.

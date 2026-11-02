@@ -1,0 +1,403 @@
+{
+  "created_utc": "2026-11-02T22:02:52+00:00",
+  "git_commit": "97b9e1afad03b198f15a4e5f77ca805236415808",
+  "versions": {
+    "python": "3.11.9",
+    "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.36",
+    "ultralytics": "8.4.198",
+    "torch": "2.14.1+cpu",
+    "torchvision": "0.29.1+cpu",
+    "numpy": "2.3.5",
+    "litert-torch": "0.10.0",
+    "ai-edge-litert": "2.3.0",
+    "ai-edge-quantizer": "0.10.1",
+    "coremltools": "9.0"
+  },
+  "weights": {
+    "file": "yolo26n.pt",
+    "sha256": "9b09cc8bf347f0fc8a5f7657480587f25db09b34bf33b0652110fb03a8ad4fef"
+  },
+  "labels": {
+    "file": "labels.txt",
+    "count": 80
+  },
+  "fidelity_check": {
+    "images": 32,
+    "source": "coco128 train2017, first N sorted (also used for INT8 calibration)",
+    "conf": 0.25,
+    "iou": 0.5
+  },
+  "artifacts": [
+    {
+      "variant": "fp32",
+      "imgsz": 640,
+      "file": "yolo26n_640_fp32.tflite",
+      "export_args": {
+        "format": "litert",
+        "imgsz": 640,
+        "quantize": null
+      },
+      "sha256": "abeb1071cbb952edab5bff8fe1a072b746e91d2ad81dbf181e7dc1cbd8511da1",
+      "size_bytes": 9970397,
+      "signature": {
+        "inputs": [
+          {
+            "name": "serving_default_args_0",
+            "shape": [
+              1,
+              3,
+              640,
+              640
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "outputs": [
+          {
+            "name": "serving_default_output_0_output",
+            "shape": [
+              1,
+              84,
+              8400
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "layout": "raw [1, 4 + classes, anchors] -- NMS required"
+      },
+      "fidelity": {
+        "reference_detections": 142,
+        "matched": 142,
+        "match_rate": 1.0,
+        "extra_detections": 0,
+        "mean_abs_conf_delta": 0.0
+      }
+    },
+    {
+      "variant": "int8",
+      "imgsz": 640,
+      "file": "yolo26n_640_int8.tflite",
+      "export_args": {
+        "format": "litert",
+        "imgsz": 640,
+        "quantize": 8,
+        "data": "coco128.yaml",
+        "fraction": 1.0
+      },
+      "sha256": "39aebcf1e69e5958e1d6ba4943b9fb71567b2a234b2a7c5f89a015aad9d3cd02",
+      "size_bytes": 2931001,
+      "signature": {
+        "inputs": [
+          {
+            "name": "serving_default_args_0",
+            "shape": [
+              1,
+              3,
+              640,
+              640
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "outputs": [
+          {
+            "name": "serving_default_output_0_output_dequant",
+            "shape": [
+              1,
+              84,
+              8400
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "layout": "raw [1, 4 + classes, anchors] -- NMS required"
+      },
+      "fidelity": {
+        "reference_detections": 142,
+        "matched": 126,
+        "match_rate": 0.8873,
+        "extra_detections": 30,
+        "mean_abs_conf_delta": 0.0977
+      }
+    },
+    {
+      "variant": "w8a32",
+      "imgsz": 640,
+      "file": "yolo26n_640_w8a32.tflite",
+      "export_args": {
+        "format": "litert",
+        "imgsz": 640,
+        "quantize": "w8a32"
+      },
+      "sha256": "49a4826a60a76bb0f18619d7fe48a55764df4aacea6cf1cfdb7b7e6bba649cdd",
+      "size_bytes": 2875561,
+      "signature": {
+        "inputs": [
+          {
+            "name": "serving_default_args_0",
+            "shape": [
+              1,
+              3,
+              640,
+              640
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "outputs": [
+          {
+            "name": "serving_default_output_0_output",
+            "shape": [
+              1,
+              84,
+              8400
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "layout": "raw [1, 4 + classes, anchors] -- NMS required"
+      },
+      "fidelity": {
+        "reference_detections": 142,
+        "matched": 135,
+        "match_rate": 0.9507,
+        "extra_detections": 4,
+        "mean_abs_conf_delta": 0.0196
+      }
+    },
+    {
+      "variant": "coreml",
+      "imgsz": 640,
+      "file": "yolo26n_640_coreml.mlpackage",
+      "export_args": {
+        "format": "coreml",
+        "imgsz": 640,
+        "quantize": 16
+      },
+      "sha256": "44823d65a3a8e561ed2f05667de0ab6d098a041fd3cf77e7e5551de352e11dbd",
+      "size_bytes": 5068277,
+      "signature": {
+        "inputs": [
+          {
+            "name": "image",
+            "type": "imageType",
+            "shape": [
+              640,
+              640
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "name": "var_1401",
+            "type": "multiArrayType",
+            "shape": [
+              1,
+              84,
+              8400
+            ]
+          }
+        ]
+      },
+      "fidelity": "not run: Core ML prediction requires macOS"
+    },
+    {
+      "variant": "fp32",
+      "imgsz": 320,
+      "file": "yolo26n_320_fp32.tflite",
+      "export_args": {
+        "format": "litert",
+        "imgsz": 320,
+        "quantize": null
+      },
+      "sha256": "e2e6028a78dcdf7593a72d8287a707c37c35084d7a7f7388308426b046f3cfa7",
+      "size_bytes": 9894796,
+      "signature": {
+        "inputs": [
+          {
+            "name": "serving_default_args_0",
+            "shape": [
+              1,
+              3,
+              320,
+              320
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "outputs": [
+          {
+            "name": "serving_default_output_0_output",
+            "shape": [
+              1,
+              84,
+              2100
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "layout": "raw [1, 4 + classes, anchors] -- NMS required"
+      },
+      "fidelity": {
+        "reference_detections": 102,
+        "matched": 102,
+        "match_rate": 1.0,
+        "extra_detections": 0,
+        "mean_abs_conf_delta": 0.0
+      }
+    },
+    {
+      "variant": "int8",
+      "imgsz": 320,
+      "file": "yolo26n_320_int8.tflite",
+      "export_args": {
+        "format": "litert",
+        "imgsz": 320,
+        "quantize": 8,
+        "data": "coco128.yaml",
+        "fraction": 1.0
+      },
+      "sha256": "073178a5ac93f995ddaa0f65be65f3501540b7ca316c73ee8485734afd81a073",
+      "size_bytes": 2912121,
+      "signature": {
+        "inputs": [
+          {
+            "name": "serving_default_args_0",
+            "shape": [
+              1,
+              3,
+              320,
+              320
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "outputs": [
+          {
+            "name": "serving_default_output_0_output_dequant",
+            "shape": [
+              1,
+              84,
+              2100
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "layout": "raw [1, 4 + classes, anchors] -- NMS required"
+      },
+      "fidelity": {
+        "reference_detections": 102,
+        "matched": 87,
+        "match_rate": 0.8529,
+        "extra_detections": 6,
+        "mean_abs_conf_delta": 0.1624
+      }
+    },
+    {
+      "variant": "w8a32",
+      "imgsz": 320,
+      "file": "yolo26n_320_w8a32.tflite",
+      "export_args": {
+        "format": "litert",
+        "imgsz": 320,
+        "quantize": "w8a32"
+      },
+      "sha256": "f7bdfc0e5b90cd1bd71a097b209fad1b0c5dd38ae674654668191ea9b30146be",
+      "size_bytes": 2799961,
+      "signature": {
+        "inputs": [
+          {
+            "name": "serving_default_args_0",
+            "shape": [
+              1,
+              3,
+              320,
+              320
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "outputs": [
+          {
+            "name": "serving_default_output_0_output",
+            "shape": [
+              1,
+              84,
+              2100
+            ],
+            "dtype": "float32",
+            "quant_scale": 0.0,
+            "quant_zero_point": 0
+          }
+        ],
+        "layout": "raw [1, 4 + classes, anchors] -- NMS required"
+      },
+      "fidelity": {
+        "reference_detections": 102,
+        "matched": 95,
+        "match_rate": 0.9314,
+        "extra_detections": 2,
+        "mean_abs_conf_delta": 0.0221
+      }
+    },
+    {
+      "variant": "coreml",
+      "imgsz": 320,
+      "file": "yolo26n_320_coreml.mlpackage",
+      "export_args": {
+        "format": "coreml",
+        "imgsz": 320,
+        "quantize": 16
+      },
+      "sha256": "b5a9c0248265dc5014dc97d8b6f08176c03457f5de0c9bd1de482625808c13d9",
+      "size_bytes": 5030471,
+      "signature": {
+        "inputs": [
+          {
+            "name": "image",
+            "type": "imageType",
+            "shape": [
+              320,
+              320
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "name": "var_1401",
+            "type": "multiArrayType",
+            "shape": [
+              1,
+              84,
+              2100
+            ]
+          }
+        ]
+      },
+      "fidelity": "not run: Core ML prediction requires macOS"
+    }
+  ],
+  "failures": []
+}
