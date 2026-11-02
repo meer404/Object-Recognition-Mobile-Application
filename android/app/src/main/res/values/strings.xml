@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- REVIEW: Sorani app name, must match UiStrings.appTitle -->
+    <string name="app_name">بینینی کوردی</string>
+</resources>

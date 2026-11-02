@@ -24,7 +24,9 @@ android {
         applicationId = "com.mir.kurdish_vision"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Pinned (CLAUDE.md: minimum Android API 24) so a Flutter upgrade
+        // cannot silently change the research baseline.
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

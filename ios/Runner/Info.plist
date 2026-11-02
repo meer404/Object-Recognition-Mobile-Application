@@ -7,7 +7,13 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Kurdish Vision</string>
+	<string>بینینی کوردی</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ئەم ئەپە کامێرا بەکاردەهێنێت بۆ ناسینەوەی ئەو شتانەی لەبەردەمتن. وێنەکان تەنها لەسەر مۆبایلەکەت شیدەکرێنەوە و هیچ شوێنێک نانێردرێن.</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>ckb</string>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
