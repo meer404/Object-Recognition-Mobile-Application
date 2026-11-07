@@ -364,6 +364,23 @@ void main() {
     });
   });
 
+  group('exit', () {
+    test('prepareToExit releases the camera and the screen lock', () async {
+      await app.start();
+      await app.prepareToExit();
+      expect(camera.open, isFalse);
+      expect(camera.streaming, isFalse);
+      expect(keepAwake.last, isFalse);
+    });
+
+    test('prepareToExit is safe when the camera never opened', () async {
+      camera.initializeError = _denied;
+      await app.start();
+      await app.prepareToExit();
+      expect(camera.calls, contains('release'));
+    });
+  });
+
   group('resilience', () {
     test('a camera call that throws does not block later operations', () async {
       await app.start();

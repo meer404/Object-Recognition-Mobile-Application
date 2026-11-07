@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kurdish_vision/app/app_controller.dart';
 import 'package:kurdish_vision/app/app_theme.dart';
@@ -109,6 +110,69 @@ void main() {
       await tester.tap(find.byTooltip(UiStrings.back));
       await tester.pumpAndSettle();
       expect(app.status, AppStatus.paused);
+    });
+  });
+
+  group('leaving with Back', () {
+    // On the Infinix X690B, Back closed the activity while the camera still
+    // delivered frames, and one arriving after the engine detached crashed the
+    // app ("FlutterJNI is not attached to native"). The camera must be released
+    // first, and only then the app closed.
+    late List<String> platformCalls;
+
+    setUp(() {
+      platformCalls = <String>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (
+            MethodCall call,
+          ) async {
+            platformCalls.add(call.method);
+            return null;
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    testWidgets('releases the camera before the app closes', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(tester);
+      bool? cameraOpenWhenClosing;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (
+            MethodCall call,
+          ) async {
+            platformCalls.add(call.method);
+            if (call.method == 'SystemNavigator.pop') {
+              cameraOpenWhenClosing = camera.open;
+            }
+            return null;
+          });
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(platformCalls, contains('SystemNavigator.pop'));
+      expect(cameraOpenWhenClosing, isFalse, reason: 'released first');
+      expect(camera.calls, contains('release'));
+    });
+
+    testWidgets('Back inside settings only closes settings', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(tester);
+      await tester.longPress(find.byType(CameraScreen));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsScreen), findsNothing);
+      expect(platformCalls, isNot(contains('SystemNavigator.pop')));
+      expect(app.status, AppStatus.running);
+      expect(camera.open, isTrue);
     });
   });
 

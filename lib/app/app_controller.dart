@@ -149,6 +149,20 @@ class AppController extends ChangeNotifier {
     }
   });
 
+  /// Releases the camera and screen lock before the app closes. Waits for any
+  /// operation already running. On the Infinix X690B, closing with the camera
+  /// still streaming crashed: a preview frame reached the engine after it had
+  /// detached (D-024).
+  Future<void> prepareToExit() => _enqueue(() async {
+    _cameraReleased = true;
+    _onStopped?.call();
+    notifyListeners(); // Removes the preview before its controller goes away.
+    await _guarded(() async {
+      await _setKeepAwake(false);
+      await _camera.release();
+    });
+  });
+
   /// The detector died mid-run. Stops the camera and says so, rather than
   /// carrying on silently; a tap retries.
   void reportDetectorLost() {

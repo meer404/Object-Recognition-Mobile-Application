@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 
 import '../accessibility/accessibility_controls.dart';
 import '../settings/settings_screen.dart';
@@ -133,42 +134,56 @@ class _CameraScreenState extends State<CameraScreen>
       listenable: _app,
       builder: (BuildContext context, Widget? _) {
         final AppStatus status = _app.status;
-        return Scaffold(
-          body: AccessibilityControls(
-            label: _statusText(status),
-            tapHint: _tapHint(status),
-            doubleTapLabel: _pauseLabel(status),
-            longPressHint: UiStrings.settings,
-            onTap: _onTap,
-            onDoubleTap: () => unawaited(_app.togglePause()),
-            onLongPress: () => unawaited(_openSettings()),
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                if (_app.showPreview) _app.camera.buildPreview(),
-                if (_app.showPreview &&
-                    _app.settings.showDebugOverlay &&
-                    _app.detectionOutput != null)
-                  DebugOverlay(output: _app.detectionOutput!),
-                // While running the preview speaks for itself; a label over it
-                // could also be read as a claim about what is in view.
-                if (status != AppStatus.running)
-                  Center(
-                    child: Container(
-                      color: Colors.black,
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        _statusText(status),
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineSmall,
+        // Back on this screen closes the app. Release the camera first: closing
+        // while it streams crashed on a real phone (D-024).
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (bool didPop, Object? _) {
+            if (!didPop) unawaited(_exitApp());
+          },
+          child: Scaffold(
+            body: AccessibilityControls(
+              label: _statusText(status),
+              tapHint: _tapHint(status),
+              doubleTapLabel: _pauseLabel(status),
+              longPressHint: UiStrings.settings,
+              onTap: _onTap,
+              onDoubleTap: () => unawaited(_app.togglePause()),
+              onLongPress: () => unawaited(_openSettings()),
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  if (_app.showPreview) _app.camera.buildPreview(),
+                  if (_app.showPreview &&
+                      _app.settings.showDebugOverlay &&
+                      _app.detectionOutput != null)
+                    DebugOverlay(output: _app.detectionOutput!),
+                  // While running the preview speaks for itself; a label over it
+                  // could also be read as a claim about what is in view.
+                  if (status != AppStatus.running)
+                    Center(
+                      child: Container(
+                        color: Colors.black,
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          _statusText(status),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         );
       },
     );
+  }
+
+  /// Releases the camera, then closes the app (Android finishes the activity).
+  Future<void> _exitApp() async {
+    await _app.prepareToExit();
+    await SystemNavigator.pop();
   }
 }
