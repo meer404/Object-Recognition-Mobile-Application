@@ -44,6 +44,7 @@ class AppController extends ChangeNotifier {
     void Function(AppSettings settings)? onSettingsChanged,
     Future<void> Function()? onDispose,
     this.detectionOutput,
+    this.exportMetrics,
   }) : _camera = camera,
        _haptics = haptics,
        _setKeepAwake = setKeepAwake,
@@ -76,6 +77,10 @@ class AppController extends ChangeNotifier {
 
   /// The latest detector result, for the debug overlay.
   final ValueListenable<DetectionOutput?>? detectionOutput;
+
+  /// Shares the latest evaluation session's files. Returns false if there is
+  /// none. Null hides the export button.
+  final Future<bool> Function()? exportMetrics;
 
   late final FrameScheduler scheduler;
   late final StreamSubscription<CameraFrame> _frames;

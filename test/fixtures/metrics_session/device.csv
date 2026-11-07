@@ -1,0 +1,4 @@
+timestamp_utc,rss_mb,battery_percent,battery_state,camera_fps,inference_fps,dropped_busy,dropped_rate
+2026-11-08T14:30:05.000Z,300.0,90,discharging,,,0,0
+2026-11-08T14:30:15.000Z,305.0,89,discharging,30.00,3.75,1,260
+2026-11-08T14:30:25.000Z,310.0,88,discharging,30.00,4.00,2,260

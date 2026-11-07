@@ -28,6 +28,8 @@ class AppSettings {
     this.trackMatchIou = 0.3,
     this.positionHysteresis = 0.05,
     this.showDebugOverlay = false,
+    this.metricsFlushInterval = const Duration(seconds: 5),
+    this.deviceSampleInterval = const Duration(seconds: 10),
     this.evaluationMode = false,
   }) : assert(
          targetInferencesPerSecond >= minInferencesPerSecond &&
@@ -100,6 +102,12 @@ class AppSettings {
   /// Draws detection boxes over the preview. Debug builds only.
   final bool showDebugOverlay;
 
+  /// How often evaluation rows are written to disk. A crash loses at most this.
+  final Duration metricsFlushInterval;
+
+  /// How often RAM, battery and frame rates are sampled during evaluation.
+  final Duration deviceSampleInterval;
+
   /// When true, metrics are logged and debug overlays may be shown.
   final bool evaluationMode;
 
@@ -108,6 +116,31 @@ class AppSettings {
     microseconds: (Duration.microsecondsPerSecond / targetInferencesPerSecond)
         .round(),
   );
+
+  /// Every setting, for each evaluation session's `session.json`. A test checks
+  /// that no setting is missing.
+  Map<String, Object?> toJson() => <String, Object?>{
+    'targetInferencesPerSecond': targetInferencesPerSecond,
+    'confidenceThreshold': confidenceThreshold,
+    'confirmationHits': confirmationHits,
+    'confirmationWindow': confirmationWindow,
+    'repeatCooldownMs': repeatCooldown.inMilliseconds,
+    'maxObjectsPerSentence': maxObjectsPerSentence,
+    'leftRegionEnd': leftRegionEnd,
+    'rightRegionStart': rightRegionStart,
+    'speechVolume': speechVolume,
+    'speechStartTimeoutMs': speechStartTimeout.inMilliseconds,
+    'cameraQuality': cameraQuality.name,
+    'modelInputSize': modelInputSize,
+    'candidateConfidence': candidateConfidence,
+    'nmsIouThreshold': nmsIouThreshold,
+    'trackMatchIou': trackMatchIou,
+    'positionHysteresis': positionHysteresis,
+    'showDebugOverlay': showDebugOverlay,
+    'metricsFlushIntervalMs': metricsFlushInterval.inMilliseconds,
+    'deviceSampleIntervalMs': deviceSampleInterval.inMilliseconds,
+    'evaluationMode': evaluationMode,
+  };
 
   AppSettings copyWith({
     double? targetInferencesPerSecond,
@@ -127,6 +160,8 @@ class AppSettings {
     double? trackMatchIou,
     double? positionHysteresis,
     bool? showDebugOverlay,
+    Duration? metricsFlushInterval,
+    Duration? deviceSampleInterval,
     bool? evaluationMode,
   }) {
     return AppSettings(
@@ -149,6 +184,8 @@ class AppSettings {
       trackMatchIou: trackMatchIou ?? this.trackMatchIou,
       positionHysteresis: positionHysteresis ?? this.positionHysteresis,
       showDebugOverlay: showDebugOverlay ?? this.showDebugOverlay,
+      metricsFlushInterval: metricsFlushInterval ?? this.metricsFlushInterval,
+      deviceSampleInterval: deviceSampleInterval ?? this.deviceSampleInterval,
       evaluationMode: evaluationMode ?? this.evaluationMode,
     );
   }

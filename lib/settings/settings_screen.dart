@@ -5,8 +5,8 @@ import '../app/app_controller.dart';
 import '../app/ui_strings.dart';
 import '../debug/speech_probe_screen.dart';
 
-/// Settings placeholder. Volume, verbosity and thresholds are added once the
-/// features they control can be tried on a device.
+/// Settings. Volume, verbosity and thresholds are added once the features they
+/// control can be tried on a device.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key, required this.controller});
 
@@ -24,14 +24,37 @@ class SettingsScreen extends StatelessWidget {
         ),
         title: const Text(UiStrings.settings),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            UiStrings.settingsPlaceholder,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+      body: ListenableBuilder(
+        listenable: controller,
+        builder: (BuildContext context, Widget? _) => ListView(
+          padding: const EdgeInsets.all(16),
+          children: <Widget>[
+            // In every build: measurements must come from profile or release
+            // builds (D-021). A labelled switch rather than a hidden gesture, so
+            // it works with a screen reader.
+            SwitchListTile(
+              title: const Text(UiStrings.evaluationMode),
+              subtitle: const Text(UiStrings.evaluationModeDetail),
+              value: controller.settings.evaluationMode,
+              onChanged: (bool on) => controller.updateSettings(
+                controller.settings.copyWith(evaluationMode: on),
+              ),
+            ),
+            if (controller.exportMetrics != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: FilledButton(
+                  onPressed: () => _export(context),
+                  child: const Text(UiStrings.exportMetrics),
+                ),
+              ),
+            const SizedBox(height: 24),
+            Text(
+              UiStrings.settingsPlaceholder,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ],
         ),
       ),
       // Researcher tools, compiled out of release builds (D-010).
@@ -67,5 +90,15 @@ class SettingsScreen extends StatelessWidget {
             )
           : null,
     );
+  }
+
+  Future<void> _export(BuildContext context) async {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final bool shared = await controller.exportMetrics!();
+    if (!shared) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text(UiStrings.noMetrics)),
+      );
+    }
   }
 }

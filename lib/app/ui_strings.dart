@@ -52,6 +52,20 @@ abstract final class UiStrings {
   // REVIEW — "Back" (replaces the framework's Arabic tooltip, D-004)
   static const String back = 'گەڕانەوە';
 
+  // REVIEW — "Evaluation mode" (research measurements)
+  static const String evaluationMode = 'دۆخی هەڵسەنگاندن';
+
+  // REVIEW — "Records speed, memory and battery figures on this phone. No
+  // pictures are saved."
+  static const String evaluationModeDetail =
+      'ژمارەکانی خێرایی، بیرگە و پاتری لەسەر ئەم مۆبایلە تۆمار دەکات. هیچ وێنەیەک هەڵناگیرێت.';
+
+  // REVIEW — "Share recordings"
+  static const String exportMetrics = 'ناردنی تۆمارەکان';
+
+  // REVIEW — "There are no recordings to share."
+  static const String noMetrics = 'هیچ تۆمارێک نییە بۆ ناردن.';
+
   // REVIEW — "Settings will be added in a later version."
   static const String settingsPlaceholder =
       'ڕێکخستنەکان لە وەشانی داهاتوودا زیاد دەکرێن.';
@@ -72,6 +86,10 @@ abstract final class UiStrings {
     resumeAction,
     settings,
     back,
+    evaluationMode,
+    evaluationModeDetail,
+    exportMetrics,
+    noMetrics,
     settingsPlaceholder,
   ];
 }

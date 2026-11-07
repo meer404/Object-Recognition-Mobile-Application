@@ -70,5 +70,9 @@ Draft wording. Examples: «لەبەردەمت مێزێک هەیە.» · «لای
 | resumeAction | دەستپێکردنەوە | "Resume" (screen-reader action) | ☐ |
 | settings | ڕێکخستنەکان | "Settings" | ☐ |
 | back | گەڕانەوە | "Back" | ☐ |
+| evaluationMode | دۆخی هەڵسەنگاندن | "Evaluation mode" (research measurements) | ☐ |
+| evaluationModeDetail | ژمارەکانی خێرایی، بیرگە و پاتری لەسەر ئەم مۆبایلە تۆمار دەکات. هیچ وێنەیەک هەڵناگیرێت. | "Records speed, memory and battery figures on this phone. No pictures are saved." | ☐ |
+| exportMetrics | ناردنی تۆمارەکان | "Share recordings" | ☐ |
+| noMetrics | هیچ تۆمارێک نییە بۆ ناردن. | "There are no recordings to share." | ☐ |
 | settingsPlaceholder | ڕێکخستنەکان لە وەشانی داهاتوودا زیاد دەکرێن. | "Settings will be added in a later version." | ☐ |
 | iOS camera permission | ئەم ئەپە کامێرا بەکاردەهێنێت بۆ ناسینەوەی ئەو شتانەی لەبەردەمتن. وێنەکان تەنها لەسەر مۆبایلەکەت شیدەکرێنەوە و هیچ شوێنێک نانێردرێن. | "This app uses the camera to recognise objects in front of you. Images are processed only on your phone and are never sent anywhere." | ☐ |

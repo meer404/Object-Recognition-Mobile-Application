@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -12,6 +14,10 @@ import 'app/sorani_localizations.dart';
 import 'app/ui_strings.dart';
 import 'camera/plugin_camera_service.dart';
 import 'detection/yolo_detector.dart';
+import 'metrics/csv_metrics_logger.dart';
+import 'metrics/evaluation_recorder.dart';
+import 'metrics/metrics_logger.dart';
+import 'metrics/platform_metrics.dart';
 import 'settings/app_settings.dart';
 import 'speech/audio_clip_speech.dart';
 import 'speech/kurdish_labels.dart';
@@ -27,21 +33,56 @@ void main() {
 
 AppController _createController() {
   const AppSettings settings = AppSettings();
+  final String modelAsset =
+      'assets/models/yolo26n_${settings.modelInputSize}_fp32.tflite';
+  int? modelBytes;
+  late final AppController controller;
+
+  final YoloDetector detector = YoloDetector(
+    settings: settings,
+    allowedClasses: kurdishLabels.keys.toSet(),
+    loadModelBytes: () async {
+      final ByteData data = await rootBundle.load(modelAsset);
+      modelBytes = data.lengthInBytes;
+      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    },
+  );
+
+  final EvaluationRecorder recorder = EvaluationRecorder(
+    logger: CsvMetricsLogger(
+      root: metricsRoot,
+      flushInterval: settings.metricsFlushInterval,
+    ),
+    probe: PlatformDeviceProbe(),
+    counts: () => SchedulerCounts(
+      accepted: controller.scheduler.acceptedCount,
+      droppedBusy: controller.scheduler.droppedBusyCount,
+      droppedRate: controller.scheduler.droppedRateCount,
+    ),
+    sessionInfo: () async {
+      final (String device, String os) = await deviceDescription();
+      return SessionInfo(
+        startedAt: DateTime.now(),
+        buildMode: currentBuildMode(),
+        appVersion: await appVersion(),
+        gitCommit: buildGitCommit,
+        device: device,
+        os: os,
+        accelerator: detector.accelerator ?? 'not loaded',
+        modelAsset: modelAsset,
+        modelBytes: modelBytes,
+        settings: controller.settings.toJson(),
+      );
+    },
+  );
+
   final RecognitionPipeline pipeline = RecognitionPipeline(
     settings: settings,
     speech: AudioClipSpeech.standard(),
-    detector: YoloDetector(
-      settings: settings,
-      allowedClasses: kurdishLabels.keys.toSet(),
-      loadModelBytes: () async {
-        final ByteData data = await rootBundle.load(
-          'assets/models/yolo26n_${settings.modelInputSize}_fp32.tflite',
-        );
-        return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-      },
-    ),
+    detector: detector,
+    onMetrics: recorder.logFrame,
   );
-  final AppController controller = AppController(
+  controller = AppController(
     settings: settings,
     camera: PluginCameraService(quality: settings.cameraQuality),
     haptics: const PlatformHaptics(),
@@ -49,10 +90,25 @@ AppController _createController() {
     onFrame: pipeline.processFrame,
     onRepeat: pipeline.repeat,
     prepare: pipeline.load,
-    onStopped: pipeline.reset,
-    onSettingsChanged: pipeline.updateSettings,
-    onDispose: pipeline.dispose,
+    onStopped: () {
+      pipeline.reset();
+      unawaited(recorder.flush());
+    },
+    onSettingsChanged: (AppSettings value) {
+      pipeline.updateSettings(value);
+      unawaited(recorder.apply(value));
+    },
+    onDispose: () async {
+      await pipeline.dispose();
+      await recorder.dispose();
+    },
     detectionOutput: pipeline.latestOutput,
+    exportMetrics: () async {
+      final List<String> files = await recorder.exportFiles();
+      if (files.isEmpty) return false;
+      await shareFiles(files);
+      return true;
+    },
   );
   pipeline.onDetectorLost = controller.reportDetectorLost;
   return controller;
