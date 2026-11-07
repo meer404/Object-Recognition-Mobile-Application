@@ -126,8 +126,10 @@ class AppController extends ChangeNotifier {
       case AppStatus.error:
       case AppStatus.modelError:
         await start();
-      case AppStatus.initializing:
       case AppStatus.paused:
+        // Nothing to repeat, but a tap must never feel dead.
+        await _haptics.tick();
+      case AppStatus.initializing:
         break;
     }
   }

@@ -87,6 +87,21 @@ class _CameraScreenState extends State<CameraScreen>
 
   bool _openingSettings = false;
 
+  /// While paused a tap repeats nothing, so it says why instead of doing
+  /// nothing (a silent tap feels like a frozen app).
+  void _onTap() {
+    if (_app.status == AppStatus.paused) {
+      unawaited(
+        SemanticsService.sendAnnouncement(
+          View.of(context),
+          UiStrings.paused,
+          TextDirection.rtl,
+        ),
+      );
+    }
+    unawaited(_app.primaryAction());
+  }
+
   static String _statusText(AppStatus status) => switch (status) {
     AppStatus.initializing => UiStrings.preparing,
     AppStatus.running => UiStrings.running,
@@ -124,7 +139,7 @@ class _CameraScreenState extends State<CameraScreen>
             tapHint: _tapHint(status),
             doubleTapLabel: _pauseLabel(status),
             longPressHint: UiStrings.settings,
-            onTap: () => unawaited(_app.primaryAction()),
+            onTap: _onTap,
             onDoubleTap: () => unawaited(_app.togglePause()),
             onLongPress: () => unawaited(_openSettings()),
             child: Stack(

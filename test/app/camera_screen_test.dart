@@ -134,6 +134,27 @@ void main() {
       expect(app.status, AppStatus.running);
       handle.dispose();
     });
+
+    testWidgets('a tap while paused says it is paused', (
+      WidgetTester tester,
+    ) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await pumpScreen(tester);
+      await doubleTap(tester);
+      tester.takeAnnouncements();
+
+      await tester.tap(find.byType(CameraScreen));
+      await tester.pump(_pastDoubleTapWindow);
+      await tester.pumpAndSettle();
+      expect(
+        tester.takeAnnouncements().map(
+          (CapturedAccessibilityAnnouncement a) => a.message,
+        ),
+        <String>[UiStrings.paused],
+      );
+      expect(app.status, AppStatus.paused);
+      handle.dispose();
+    });
   });
 
   group('screen', () {

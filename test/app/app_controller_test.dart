@@ -123,12 +123,14 @@ void main() {
       expect(haptics.events.last, 'tick');
     });
 
-    test('does nothing while paused', () async {
+    test('while paused, does not repeat but still confirms by touch', () async {
       await app.start();
       await app.togglePause();
+      haptics.events.clear();
       await app.primaryAction();
       expect(repeats, 0);
       expect(camera.calls.where((String c) => c == 'initialize'), hasLength(1));
+      expect(haptics.events, <String>['tick'], reason: 'never a dead tap');
     });
 
     test('retries after a failure', () async {
