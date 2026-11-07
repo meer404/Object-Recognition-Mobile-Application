@@ -5,6 +5,9 @@
 /// exactly which configuration it ran with. Defaults follow CLAUDE.md.
 library;
 
+/// Camera resolution tier. The exact size depends on the device.
+enum CameraQuality { low, medium, high }
+
 /// Immutable application settings. Use [copyWith] to derive variants.
 class AppSettings {
   const AppSettings({
@@ -18,6 +21,7 @@ class AppSettings {
     this.rightRegionStart = 2 / 3,
     this.speechVolume = 1.0,
     this.speechStartTimeout = const Duration(seconds: 3),
+    this.cameraQuality = CameraQuality.medium,
     this.evaluationMode = false,
   }) : assert(
          targetInferencesPerSecond >= minInferencesPerSecond &&
@@ -67,6 +71,9 @@ class AppSettings {
   /// treated as failed so a silent engine cannot block speech forever.
   final Duration speechStartTimeout;
 
+  /// Camera resolution tier. Frames are downscaled to the model input anyway.
+  final CameraQuality cameraQuality;
+
   /// When true, metrics are logged and debug overlays may be shown.
   final bool evaluationMode;
 
@@ -87,6 +94,7 @@ class AppSettings {
     double? rightRegionStart,
     double? speechVolume,
     Duration? speechStartTimeout,
+    CameraQuality? cameraQuality,
     bool? evaluationMode,
   }) {
     return AppSettings(
@@ -102,6 +110,7 @@ class AppSettings {
       rightRegionStart: rightRegionStart ?? this.rightRegionStart,
       speechVolume: speechVolume ?? this.speechVolume,
       speechStartTimeout: speechStartTimeout ?? this.speechStartTimeout,
+      cameraQuality: cameraQuality ?? this.cameraQuality,
       evaluationMode: evaluationMode ?? this.evaluationMode,
     );
   }
