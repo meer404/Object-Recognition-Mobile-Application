@@ -14,9 +14,11 @@ device.
 |---|---|---|
 | 0 | Project scaffold, interfaces, RTL/Sorani locale, permissions | done |
 | 1A | Sorani speech: recorded clips (primary), TTS probe | done, device results pending |
-| 1B | YOLO export + inference plugin decision | next |
-| 1C | Object class list with Sorani labels | planned |
-| 2–5 | Camera, AI integration, optimisation, evaluation | planned |
+| 1B | YOLO26n export, inference plugin (`flutter_litert`) | done |
+| 1C | 20 object classes with draft Sorani labels | done, native-speaker review pending |
+| 2 | Camera, frame scheduler, main screen, gestures | done, device test pending |
+| 3 | On-device detection, tracking, Sorani sentences | next |
+| 4–5 | Optimisation, evaluation | planned |
 
 ## Build and test
 Requires Flutter (stable channel). Android API 24+, iOS 13+.
@@ -25,7 +27,7 @@ Requires Flutter (stable channel). Android API 24+, iOS 13+.
 flutter pub get
 flutter analyze
 flutter test
-flutter run            # on a real device; debug builds have a "Speech probe" screen
+flutter run            # on a real device; in debug builds, Settings has a "Speech probe"
 ```
 
 ## Documentation

@@ -306,7 +306,8 @@ _None yet. Paste one probe report per device here._
   **1.7.0**, the newest that support it; `camera` 0.12.1+ needs Flutter 3.44+.
   Upgrading would be a separate, deliberate step.
 - **Permission:** `camera` requests it, so no `permission_handler`. Audio is off
-  (`enableAudio: false`), so no microphone permission is requested.
+  (`enableAudio: false`), so the microphone is never requested at runtime. The
+  Android manifest declaration is handled in D-018.
 - **Scheduling:** the interval runs from the start of the last accepted frame,
   on a monotonic clock, and a frame is accepted only when idle.
 - **Effective rate is below the target:** frames only arrive at camera rate, so
@@ -339,4 +340,22 @@ _None yet. Paste one probe report per device here._
   until the settings screen is built. Repeat has nothing to say until Phase 3.
 - **Structure additions:** `lib/app/camera_screen.dart`,
   `lib/camera/plugin_camera_service.dart`, `lib/settings/settings_screen.dart`.
+
+## D-018 — Android permissions in the merged manifest
+- **Date:** 2026-11-07 · **Phase:** 2 · **Status:** accepted
+- **Found by** inspecting the built APK: `camera_android_camerax` 0.7.2 declares
+  `RECORD_AUDIO` and `WRITE_EXTERNAL_STORAGE` (which implies
+  `READ_EXTERNAL_STORAGE`) for video recording. The app uses none of them, so
+  `AndroidManifest.xml` removes them with `tools:node="remove"`. A test keeps
+  those markers in place.
+- **Kept:** `ACCESS_NETWORK_STATE` and `WAKE_LOCK` from media3 (the audio player
+  behind `just_audio`). Neither prompts the user or exposes camera or audio data,
+  and removing them could break playback.
+- **Verified on 2026-11-07:** the generated release manifest lists only CAMERA,
+  VIBRATE, ACCESS_NETWORK_STATE, WAKE_LOCK and androidx's internal receiver
+  permission, with **no INTERNET**. INTERNET comes only from Flutter's debug and
+  profile manifests, which confirms D-005. No model file ships yet, and Phase 3
+  must repeat this check after adding `flutter_litert`.
+- **Unverified:** that the camera opens correctly on a real phone with these
+  removed. It should, since none is needed without video recording.
 
