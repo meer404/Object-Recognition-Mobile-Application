@@ -17,6 +17,9 @@ class FakeCameraService implements CameraService {
   /// Thrown by the next start(), then cleared.
   Object? startError;
 
+  /// Thrown by the next stop(), then cleared.
+  Object? stopError;
+
   /// While set, initialize() waits for it, to test overlapping operations.
   Completer<void>? initializeGate;
 
@@ -63,7 +66,12 @@ class FakeCameraService implements CameraService {
   });
 
   @override
-  Future<void> stop() => _run('stop', () async => streaming = false);
+  Future<void> stop() => _run('stop', () async {
+    final Object? error = stopError;
+    stopError = null;
+    if (error != null) throw error;
+    streaming = false;
+  });
 
   @override
   Future<void> release() => _run('release', () async {

@@ -136,10 +136,12 @@ class AppController extends ChangeNotifier {
   Future<void> togglePause() => _enqueue(() async {
     if (_status == AppStatus.running) {
       _onStopped?.call();
-      await _camera.stop();
-      await _setKeepAwake(false);
-      _setStatus(AppStatus.paused);
-      await _haptics.stopped();
+      await _guarded(() async {
+        await _camera.stop();
+        await _setKeepAwake(false);
+        _setStatus(AppStatus.paused);
+        await _haptics.stopped();
+      });
     } else if (_status == AppStatus.paused) {
       await _startStreaming(announceStart: true);
     }
@@ -277,8 +279,21 @@ class AppController extends ChangeNotifier {
     }
   }
 
+  /// Runs [operation] after everything already queued. A failure is logged and
+  /// the queue carries on: one failed operation must never block the rest
+  /// (pause, background release, dispose).
   Future<void> _enqueue(Future<void> Function() operation) {
-    return _queue = _queue.then((_) => _disposed ? null : operation());
+    return _queue = _queue
+        .then((_) => _disposed ? null : operation())
+        .catchError((Object error, StackTrace stackTrace) {
+          developer.log(
+            'queued camera operation failed',
+            name: 'app',
+            error: error,
+            stackTrace: stackTrace,
+          );
+          if (!_disposed) _setStatus(AppStatus.error);
+        });
   }
 
   void _setStatus(AppStatus value) {

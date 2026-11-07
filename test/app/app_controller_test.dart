@@ -362,6 +362,31 @@ void main() {
     });
   });
 
+  group('resilience', () {
+    test('a camera call that throws does not block later operations', () async {
+      await app.start();
+      camera.stopError = StateError('stop failed');
+      await app.togglePause();
+      expect(app.status, AppStatus.error);
+
+      // Every later request must still run.
+      await app.primaryAction();
+      expect(app.status, AppStatus.running, reason: 'retry still works');
+      app.handleLifecycle(AppLifecycleState.paused);
+      await settle();
+      expect(camera.open, isFalse, reason: 'backgrounding still releases');
+    });
+
+    test('dispose still releases the camera after a failure', () async {
+      await app.start();
+      camera.stopError = StateError('stop failed');
+      await app.togglePause();
+      app.dispose();
+      await settle();
+      expect(camera.calls.last, 'dispose');
+    });
+  });
+
   group('ordering', () {
     test('overlapping requests never run camera calls at once', () async {
       camera.initializeGate = Completer<void>();
