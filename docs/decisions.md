@@ -297,3 +297,46 @@ _None yet. Paste one probe report per device here._
   people, including the user study.
 - **For the paper:** any synthetic audio used must be reported as synthetic,
   with its voice and model version.
+
+## D-016 — Camera packages and frame scheduling
+- **Date:** 2026-11-07 · **Phase:** 2 · **Status:** accepted (author chose to
+  keep the toolchain)
+- **Toolchain:** stays on Flutter 3.41.6 / Dart 3.11.4 (current stable is
+  3.47.9). So `camera` is pinned to **0.12.0+2** and `wakelock_plus` to
+  **1.7.0**, the newest that support it; `camera` 0.12.1+ needs Flutter 3.44+.
+  Upgrading would be a separate, deliberate step.
+- **Permission:** `camera` requests it, so no `permission_handler`. Audio is off
+  (`enableAudio: false`), so no microphone permission is requested.
+- **Scheduling:** the interval runs from the start of the last accepted frame,
+  on a monotonic clock, and a frame is accepted only when idle.
+- **Effective rate is below the target:** frames only arrive at camera rate, so
+  the rate is rounded down to it. In a unit test, target 4/s on a 30 fps stream
+  gives every 8th frame, **3.75/s**. Compensating for drift would add complexity
+  for little gain; report the measured rate, not the setting.
+- **Unsupported pixel formats are dropped**, never misread.
+
+## D-017 — Screen, gestures and screen readers
+- **Date:** 2026-11-07 · **Phase:** 2 · **Status:** accepted (plan approved by
+  author)
+- **Portrait lock:** the app and the capture orientation are locked to portrait,
+  so left and right in the image match the user's while the phone is upright.
+- **Screen readers:** TalkBack and VoiceOver consume raw gestures. Their activate
+  gesture runs repeat (or retry), their long press opens settings, and
+  pause/resume is a named custom action. Its name changes with the state, and it
+  is absent when there is nothing to pause. Status changes are announced in
+  Sorani. Whether real screen readers offer these actions as intended is
+  **unverified**; widget tests only check what the app exposes.
+- **Double-tap cost:** recognising a double tap makes a plain single tap wait for
+  the double-tap window (about 300 ms in Flutter) before Repeat runs. Screen-reader
+  activation has no such wait. Measure in Phase 4 if it matters.
+- **Lifecycle:** the camera is released on `hidden`/`paused` and restored on
+  return, keeping a user pause. `inactive` is ignored, because the permission
+  dialog and multi-window focus changes cause it. Automatic retry needs a real
+  trip to the background, or denying the dialog would reopen it in a loop.
+- **Settings pause the camera** so speech cannot talk over them, and the settings
+  back button has a Sorani tooltip (the built-in one is Arabic, D-004).
+- **Not done yet:** CLAUDE.md says gestures are configurable; the mapping is fixed
+  until the settings screen is built. Repeat has nothing to say until Phase 3.
+- **Structure additions:** `lib/app/camera_screen.dart`,
+  `lib/camera/plugin_camera_service.dart`, `lib/settings/settings_screen.dart`.
+

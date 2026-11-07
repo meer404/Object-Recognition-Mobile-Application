@@ -30,7 +30,9 @@ class FakeCameraService implements CameraService {
     active++;
     maxActive = active > maxActive ? active : maxActive;
     try {
-      await Future<void>.delayed(Duration.zero);
+      // A microtask, not a timer: async like a real camera, but it also runs
+      // under the widget tester's fake clock.
+      await Future<void>.value();
       await body();
     } finally {
       active--;

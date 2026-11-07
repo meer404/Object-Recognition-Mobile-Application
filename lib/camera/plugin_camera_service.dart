@@ -188,7 +188,22 @@ class PluginCameraService implements CameraService {
     if (controller == null || !controller.value.isInitialized) {
       return const SizedBox.shrink();
     }
-    return CameraPreview(controller);
+    final Size? size = controller.value.previewSize;
+    if (size == null) return CameraPreview(controller);
+    // previewSize is landscape; the app is locked to portrait. Crop to fill
+    // the screen without distorting the image.
+    return SizedBox.expand(
+      child: ClipRect(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: size.height,
+            height: size.width,
+            child: CameraPreview(controller),
+          ),
+        ),
+      ),
+    );
   }
 
   @override

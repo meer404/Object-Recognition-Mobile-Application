@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kurdish_vision/app/ui_strings.dart';
 import 'package:kurdish_vision/speech/kurdish_labels.dart';
 
 void main() {
@@ -52,6 +53,13 @@ void main() {
       multiLine: true,
     ).allMatches(source).length;
     expect(reviewed, kurdishLabels.length);
+  });
+
+  test('the review sheet lists every UI string', () {
+    final String sheet = File('docs/kurdish_labels.md').readAsStringSync();
+    for (final String text in UiStrings.all) {
+      expect(sheet, contains('| $text |'));
+    }
   });
 
   test('the review sheet mirrors the code', () {
