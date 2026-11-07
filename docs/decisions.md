@@ -531,3 +531,32 @@ _None yet. Paste one probe report per device here._
   colours from the validated categorical order. Every box is named on its axis.
 - **Labels:** YOLO .txt with COCO class ids (author's choice).
 
+## D-024 — First run on a real phone
+- **Date:** 2026-11-08 · **Device:** Infinix X690B (Note 7), Android 10 (API 29)
+  · **Build:** debug (not valid for speed claims, D-021)
+- **Confirmed working:**
+  - Build, install and camera permission.
+  - Back camera at 720×480 through CameraX; the preview is upright and fills the
+    screen without distortion.
+  - **The model runs entirely on the GPU:** LiteRT reported "Replacing 414 out of
+    414 node(s) with delegate (TfLiteGpuDelegateV2)… 1 partitions", via OpenCL.
+  - Speech played: a 24 kHz track of about 2.9 s, the length of a full sentence.
+  - The long press opens Settings, and the evaluation and debug switches toggle.
+  - Native heap was about 81 MB.
+- **Bugs found and fixed:**
+  - Back on the main screen crashed the app: the camera was still streaming when
+    the engine detached. Now the camera is released before closing; verified on
+    the phone.
+  - The settings back button was read as Arabic then Sorani («رجوع گەڕانەوە»).
+    Now Sorani only; verified on the phone.
+- **To measure:**
+  - The camera delivered only about **12.5 frames/s**. The room was dark at the
+    time, and longer exposure lowers the frame rate. Re-check in normal light;
+    at 12.5/s the 3–5 inferences/s target still fits.
+  - `just_audio` releases its native player on every `stop()`, so a new
+    ExoPlayer is created for every sentence, which probably adds to
+    frame-to-speech-start. Measure in the profile session before changing it.
+- **Not yet checked:** whether detections and positions are correct, whether the
+  debug boxes line up (the camera faced darkness), returning from the background,
+  TalkBack in use, and the speech probe report (D-009).
+
