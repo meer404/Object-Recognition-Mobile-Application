@@ -221,8 +221,8 @@ _None yet. Paste one probe report per device here._
   an Ultralytics Enterprise licence. To be confirmed with the supervisor.
 
 ## D-013 — On-device inference plugin
-- **Date:** 2026-11-03 · **Phase:** 1B · **Status:** PROPOSED, awaiting the
-  author's decision
+- **Date:** 2026-11-03 · **Phase:** 1B · **Status:** accepted (chosen by author,
+  2026-11-07)
 - **Candidates** (pub.dev / GitHub build files, checked 2026-11-03):
 
 | | `ultralytics_yolo` 0.7.1 | `flutter_litert` 3.9.4 | `tflite_flutter` 0.12.1 |
@@ -237,7 +237,7 @@ _None yet. Paste one probe report per device here._
 | Delegates | automatic GPU → CPU | GPU (V2), XNNPACK, Metal, Core ML | GPU, Metal, Core ML |
 | iOS model | Core ML `.mlpackage` | same `.tflite` via Core ML / Metal delegate | same `.tflite` |
 
-- **Recommendation: `flutter_litert`.** CLAUDE.md requires our own
+- **Decision: `flutter_litert`** (3.9.4; added to `pubspec.yaml` in Phase 3). CLAUDE.md requires our own
   FrameScheduler (drop, don't queue), an `ObjectDetector` interface and
   per-stage timings (preprocess / inference / postprocess). `YOLOView`
   owns the camera and the inference loop, so stages could not be measured
@@ -255,3 +255,23 @@ _None yet. Paste one probe report per device here._
 - **Not chosen, and why:** `tflite_flutter`, because its own fork describes
   it as unmaintained, it had no release for 12 months, and its docs and
   build file disagree on the Android minimum.
+
+## D-014 — Object classes for v1
+- **Date:** 2026-11-07 · **Phase:** 1C · **Status:** accepted (approved by
+  author); Sorani wording awaits native-speaker review
+- **What:** 20 of the model's 80 COCO classes: person, car, backpack, handbag,
+  bottle, cup, bowl, chair, couch, bed, dining table, toilet, tv, laptop,
+  remote, cell phone, sink, refrigerator, book, clock. Source of truth:
+  `lib/speech/kurdish_labels.dart`; review sheet: `docs/kurdish_labels.md`.
+  `assets/models/labels.txt` is the model's label file, and a test checks each
+  id against it. Phase 3 must filter detections to these classes.
+- **Criteria:** common indoors and useful to a blind user, plus the examples in
+  CLAUDE.md. Left out as low value or easily confused: mouse, keyboard,
+  microwave, oven, suitcase, potted plant. This is a judgement call, not a
+  measurement; the user study can test it.
+- **Limitation: no door.** CLAUDE.md lists door as an example, but COCO has no
+  door class, so `yolo26n` cannot detect one. The author chose to drop it for
+  v1 rather than train a custom model. State this in the paper.
+- **Other mismatches with CLAUDE.md's examples:** "table" is COCO `dining table`
+  (a desk may not be detected as one; unmeasured); "bag" is split into
+  backpack and handbag.
