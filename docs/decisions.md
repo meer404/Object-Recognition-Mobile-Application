@@ -469,3 +469,39 @@ _None yet. Paste one probe report per device here._
 - **Permissions:** the four new plugins declare no Android permissions. The release
   manifest was re-checked after adding them (below).
 
+## D-022 — Code review (Phase 4)
+- **Date:** 2026-11-08 · **Phase:** 4 · **Status:** done for what can be checked
+  without a phone
+- **Scope:** memory and resource leaks, camera lifecycle, isolate cleanup, error
+  handling and screen-reader behaviour. Each bug was first reproduced with a
+  failing test, then fixed in its own commit.
+- **Fixed:**
+  1. One failed camera call froze the controller: its operation chain stayed
+     failed, so pause, resume, background release and dispose were all skipped.
+  2. The same pattern in metrics: one failed write dropped all later rows, and
+     one failed session start disabled the evaluation switch for the run.
+  3. A hung inference stopped detection and speech forever, silently. It now
+     times out (`detectionTimeout`, 10 s), and the app shows its error message
+     and can reload.
+  4. Disposing during model load left the worker running. Late messages from
+     an old worker could disturb its replacement.
+  5. A repeated long press opened Settings twice and resumed the camera behind
+     them.
+  6. A tap while paused did nothing at all. It now vibrates and announces the
+     paused state.
+- **Checked, no change needed:** releasing the audio player mid-sentence still
+  restores other apps' volume (`just_audio`'s `stop()` is safe after dispose).
+  The camera is released on background even while still opening, because
+  lifecycle events queue behind the open.
+- **Found, not fixed (decisions for later):**
+  - **A release build is silent.** Only debug builds read the local test clips
+    (D-015), and no recordings exist yet, so every sentence resolves to no clips.
+    Native-speaker recordings, or a Pro-plan decision, are needed before any
+    release or user study.
+  - **Every camera frame crosses to Dart** (about 30/s at roughly 460 KB each)
+    even though about 4/s are used. A likely CPU and battery cost to measure in
+    the profiling run before changing anything.
+  - **TalkBack and the app can speak at the same time.** The app's speech ducks
+    other audio but not the screen reader. Behaviour on a real phone is unknown.
+  - Evaluation mode is not remembered across restarts (D-021).
+
