@@ -561,3 +561,46 @@ _None yet. Paste one probe report per device here._
   debug boxes line up (the camera faced darkness), returning from the background,
   TalkBack in use, and the speech probe report (D-009).
 
+## D-025 — Bottlenecks from the first profile session
+- **Date:** 2026-11-08 · **Phase:** 4 part 2 · **Status:** measured; fixes
+  proposed, not yet applied
+- **Data:** `docs/measurements/2026-11-08_infinix_x690b_profile_gpu/` (10 min,
+  profile build, GPU, dark scene, charging). See its README for the limits.
+- **What the numbers show:**
+  - The detector takes 138 ms median (P95 166 ms): inference 76 %,
+    preprocessing 18 %, postprocessing 4 %.
+  - Inference ran at 3.10/s, below the target of 4, but **the camera, not the
+    detector, sets that limit**. At 12.5 frames/s a frame arrives every 80 ms,
+    so the first frame at least 250 ms after the last comes 320 ms later:
+    3.125/s (D-016). The detector alone could do about 7/s.
+  - 7,824 frames arrived and 1,971 were used. Each of the other 5,853 still
+    crossed the platform channel into Dart (about 460 KB each at 720×480 YUV)
+    only to be dropped.
+  - Memory was stable at 309–351 MB, with no leak over 10 minutes.
+- **Bottlenecks, ranked, each with a concrete fix to measure:**
+  1. **GPU inference, 105 ms median.** Mali-class GPUs are often no faster than
+     a good CPU path for a model this small. *Fix:* an `AppSettings` accelerator
+     override (auto, GPU or CPU) for evaluation builds, then A/B sessions: GPU
+     fp32, CPU XNNPACK fp32 and CPU XNNPACK w8a32 (D-012) on this phone.
+  2. **Camera resolution larger than the model needs.** The model sees 320 px; a
+     720×480 frame is downscaled to 320×213 anyway. *Fix:* `CameraQuality.low`
+     (about 320×240) gives the model nearly the same pixels, while cutting the
+     data per frame about 4.5×, the transfer of dropped frames, and the
+     preprocessing time. The preview gets blurrier, which only affects the debug
+     overlay. Needs an accuracy spot-check (tools/evaluate.py at both sizes) and
+     a session.
+  3. **Rate rounding to the camera's frame interval.** *Fix:* schedule against a
+     running "due time" (the next frame becomes eligible at the previous due time
+     plus the interval, not the previous accept time), so the average reaches the
+     target, e.g. 4/s alternating 240 and 320 ms gaps at 12.5 fps. A pure
+     FrameScheduler change, testable without a phone. Also re-measure the camera
+     rate in normal light, since dark scenes lower it.
+  4. **Preprocessing, 25 ms in Dart.** *Fix:* fixed-point bilinear and no
+     per-pixel virtual call. Worth less than 1 or 2, and must keep the
+     2/255 match with cv2 that the fixture test checks.
+- **Not yet measured:** frame-to-speech-start (no speech in this session), and
+  the per-sentence ExoPlayer re-creation (D-024). Profile builds now load the
+  local clips (`92c9558`); a session pointed at real objects is needed.
+- **Order of work:** 3 (no phone needed), then 1 and 2 as A/B sessions on the
+  phone, then 4 only if needed.
+
