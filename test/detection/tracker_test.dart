@@ -33,7 +33,10 @@ void main() {
   setUp(() => tracker = Tracker(settings: const AppSettings()));
 
   test('a new object is due', () {
-    expect(tracker.objectsToAnnounce(_result(<TrackedDetection>[_object(1)]), start), hasLength(1));
+    expect(
+      tracker.objectsToAnnounce(_result(<TrackedDetection>[_object(1)]), start),
+      hasLength(1),
+    );
   });
 
   test('asking does not consume: it stays due until marked announced', () {
@@ -46,7 +49,10 @@ void main() {
     final FilterResult r = _result(<TrackedDetection>[_object(1)]);
     tracker.markAnnounced(tracker.objectsToAnnounce(r, start), start);
     expect(
-      tracker.objectsToAnnounce(r, start.add(const Duration(milliseconds: 4999))),
+      tracker.objectsToAnnounce(
+        r,
+        start.add(const Duration(milliseconds: 4999)),
+      ),
       isEmpty,
     );
   });
@@ -86,10 +92,9 @@ void main() {
 
   test('moving back again is another change', () {
     tracker.markAnnounced(<TrackedDetection>[_object(1)], start);
-    tracker.markAnnounced(
-      <TrackedDetection>[_object(1, position: HorizontalPosition.left)],
-      start,
-    );
+    tracker.markAnnounced(<TrackedDetection>[
+      _object(1, position: HorizontalPosition.left),
+    ], start);
     expect(
       tracker.objectsToAnnounce(_result(<TrackedDetection>[_object(1)]), start),
       hasLength(1),
@@ -107,20 +112,23 @@ void main() {
     );
   });
 
-  test('flicker: temporarily unconfirmed but still live is not re-announced', () {
-    tracker.markAnnounced(<TrackedDetection>[_object(1)], start);
-    final DateTime t = start.add(const Duration(seconds: 1));
-    // Dropped below N of M, but its track is still in the window.
-    tracker.objectsToAnnounce(
-      _result(<TrackedDetection>[], live: <int>{1}),
-      t,
-    );
-    expect(
-      tracker.objectsToAnnounce(_result(<TrackedDetection>[_object(1)]), t),
-      isEmpty,
-      reason: 'must not bypass the cooldown',
-    );
-  });
+  test(
+    'flicker: temporarily unconfirmed but still live is not re-announced',
+    () {
+      tracker.markAnnounced(<TrackedDetection>[_object(1)], start);
+      final DateTime t = start.add(const Duration(seconds: 1));
+      // Dropped below N of M, but its track is still in the window.
+      tracker.objectsToAnnounce(
+        _result(<TrackedDetection>[], live: <int>{1}),
+        t,
+      );
+      expect(
+        tracker.objectsToAnnounce(_result(<TrackedDetection>[_object(1)]), t),
+        isEmpty,
+        reason: 'must not bypass the cooldown',
+      );
+    },
+  );
 
   test('state for tracks that have gone is dropped', () {
     tracker.markAnnounced(<TrackedDetection>[_object(1)], start);

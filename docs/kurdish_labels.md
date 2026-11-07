@@ -8,28 +8,41 @@ code is then updated and its `// REVIEW` comment removed.
 Selected in D-014. All Sorani below is an unreviewed draft. Please check the
 spelling, the indefinite form, and whether it is the word people actually use.
 
-| Class id | COCO name | Sorani | Indefinite | Verified |
-|---|---|---|---|---|
-| 0 | person | کەس | کەسێک | ☐ |
-| 2 | car | ئۆتۆمبێل | ئۆتۆمبێلێک | ☐ |
-| 24 | backpack | جانتای پشت | جانتایەکی پشت | ☐ |
-| 26 | handbag | جانتا | جانتایەک | ☐ |
-| 39 | bottle | بوتڵ | بوتڵێک | ☐ |
-| 41 | cup | پەرداخ | پەرداخێک | ☐ |
-| 45 | bowl | قاپ | قاپێک | ☐ |
-| 56 | chair | کورسی | کورسییەک | ☐ |
-| 57 | couch | قەنەفە | قەنەفەیەک | ☐ |
-| 59 | bed | قەرەوێڵە | قەرەوێڵەیەک | ☐ |
-| 60 | dining table | مێز | مێزێک | ☐ |
-| 61 | toilet | تەوالێت | تەوالێتێک | ☐ |
-| 62 | tv | تەلەفزیۆن | تەلەفزیۆنێک | ☐ |
-| 63 | laptop | لاپتۆپ | لاپتۆپێک | ☐ |
-| 65 | remote | ڕیمۆت | ڕیمۆتێک | ☐ |
-| 67 | cell phone | مۆبایل | مۆبایلێک | ☐ |
-| 71 | sink | دەستشۆر | دەستشۆرێک | ☐ |
-| 72 | refrigerator | سەلاجە | سەلاجەیەک | ☐ |
-| 73 | book | کتێب | کتێبێک | ☐ |
-| 74 | clock | کاتژمێر | کاتژمێرێک | ☐ |
+| Class id | COCO name | Sorani | Indefinite | «ـیش» form | Verified |
+|---|---|---|---|---|---|
+| 0 | person | کەس | کەسێک | کەسێکیش | ☐ |
+| 2 | car | ئۆتۆمبێل | ئۆتۆمبێلێک | ئۆتۆمبێلێکیش | ☐ |
+| 24 | backpack | جانتای پشت | جانتایەکی پشت | جانتایەکی پشتیش | ☐ |
+| 26 | handbag | جانتا | جانتایەک | جانتایەکیش | ☐ |
+| 39 | bottle | بوتڵ | بوتڵێک | بوتڵێکیش | ☐ |
+| 41 | cup | پەرداخ | پەرداخێک | پەرداخێکیش | ☐ |
+| 45 | bowl | قاپ | قاپێک | قاپێکیش | ☐ |
+| 56 | chair | کورسی | کورسییەک | کورسییەکیش | ☐ |
+| 57 | couch | قەنەفە | قەنەفەیەک | قەنەفەیەکیش | ☐ |
+| 59 | bed | قەرەوێڵە | قەرەوێڵەیەک | قەرەوێڵەیەکیش | ☐ |
+| 60 | dining table | مێز | مێزێک | مێزێکیش | ☐ |
+| 61 | toilet | تەوالێت | تەوالێتێک | تەوالێتێکیش | ☐ |
+| 62 | tv | تەلەفزیۆن | تەلەفزیۆنێک | تەلەفزیۆنێکیش | ☐ |
+| 63 | laptop | لاپتۆپ | لاپتۆپێک | لاپتۆپێکیش | ☐ |
+| 65 | remote | ڕیمۆت | ڕیمۆتێک | ڕیمۆتێکیش | ☐ |
+| 67 | cell phone | مۆبایل | مۆبایلێک | مۆبایلێکیش | ☐ |
+| 71 | sink | دەستشۆر | دەستشۆرێک | دەستشۆرێکیش | ☐ |
+| 72 | refrigerator | سەلاجە | سەلاجەیەک | سەلاجەیەکیش | ☐ |
+| 73 | book | کتێب | کتێبێک | کتێبێکیش | ☐ |
+| 74 | clock | کاتژمێر | کاتژمێرێک | کاتژمێرێکیش | ☐ |
+
+## Sentence pieces
+
+Draft wording. Examples: «لەبەردەمت مێزێک هەیە.» · «لای چەپ مێزێک هەیە. پەرداخێکیش دەبینرێت.» · «لەبەردەمت مێزێک هەیە. پەرداخێک و کورسییەکیش دەبینرێن.» Please also check that these read naturally, and that «لەبەردەمت» is right for an object in the centre (CLAUDE.md also lists «لە ناوەڕاست»).
+
+| Clip key | Sorani | Meaning | Verified |
+|---|---|---|---|
+| in_front | لەبەردەمت | "in front of you" | ☐ |
+| exists | هەیە | "there is" | ☐ |
+| and | و | "and" | ☐ |
+| seen_one | دەبینرێت | "is seen" (one object) | ☐ |
+| seen_many | دەبینرێن | "are seen" (several) | ☐ |
+| nothing_detected | هیچ شتێک نەناسرایەوە | "nothing was recognised" | ☐ |
 
 ## Position words (given in CLAUDE.md)
 

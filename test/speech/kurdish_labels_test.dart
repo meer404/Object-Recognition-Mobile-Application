@@ -34,6 +34,12 @@ void main() {
         reason: 'indefinite of $id',
       );
       expect(label.indefinite, isNot(label.word), reason: 'forms of $id');
+      expect(
+        label.indefiniteAlso,
+        matches(arabicScript),
+        reason: 'also form of $id',
+      );
+      expect(label.indefiniteAlso, endsWith('یش'), reason: 'also form of $id');
     });
   });
 
@@ -52,7 +58,14 @@ void main() {
       r'^\s*// REVIEW',
       multiLine: true,
     ).allMatches(source).length;
-    expect(reviewed, kurdishLabels.length);
+    expect(reviewed, kurdishLabels.length + 1, reason: 'labels + fragments');
+  });
+
+  test('the review sheet lists every sentence piece', () {
+    final String sheet = File('docs/kurdish_labels.md').readAsStringSync();
+    phraseFragments.forEach((String key, String text) {
+      expect(sheet, contains('| $key | $text |'));
+    });
   });
 
   test('the review sheet lists every UI string', () {
@@ -69,7 +82,7 @@ void main() {
         sheet,
         contains(
           '| $id | ${label.modelName} | ${label.word} | '
-          '${label.indefinite} |',
+          '${label.indefinite} | ${label.indefiniteAlso} |',
         ),
         reason: 'class id $id',
       );

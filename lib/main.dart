@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -7,11 +9,14 @@ import 'accessibility/haptics.dart';
 import 'app/app_controller.dart';
 import 'app/app_theme.dart';
 import 'app/camera_screen.dart';
+import 'app/recognition_pipeline.dart';
 import 'app/sorani_localizations.dart';
 import 'app/ui_strings.dart';
-import 'camera/camera_frame.dart';
 import 'camera/plugin_camera_service.dart';
+import 'detection/yolo_detector.dart';
 import 'settings/app_settings.dart';
+import 'speech/audio_clip_speech.dart';
+import 'speech/kurdish_labels.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,13 +29,35 @@ void main() {
 
 AppController _createController() {
   const AppSettings settings = AppSettings();
-  return AppController(
+  final RecognitionPipeline pipeline = RecognitionPipeline(
+    settings: settings,
+    speech: AudioClipSpeech.standard(),
+    detector: YoloDetector(
+      settings: settings,
+      allowedClasses: kurdishLabels.keys.toSet(),
+      loadModelBytes: () async {
+        final ByteData data = await rootBundle.load(
+          'assets/models/yolo26n_${settings.modelInputSize}_fp32.tflite',
+        );
+        return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      },
+    ),
+  );
+  final AppController controller = AppController(
+    settings: settings,
     camera: PluginCameraService(quality: settings.cameraQuality),
     haptics: const PlatformHaptics(),
     setKeepAwake: (bool enabled) => WakelockPlus.toggle(enable: enabled),
-    // Phase 3 connects the detector here.
-    onFrame: (CameraFrame frame) async {},
+    onFrame: pipeline.processFrame,
+    onRepeat: pipeline.repeat,
+    prepare: pipeline.load,
+    onStopped: pipeline.reset,
+    onSettingsChanged: pipeline.updateSettings,
+    onDispose: pipeline.dispose,
+    detectionOutput: pipeline.latestOutput,
   );
+  pipeline.onDetectorLost = controller.reportDetectorLost;
+  return controller;
 }
 
 /// Root widget: Sorani locale, RTL, high-contrast theme.

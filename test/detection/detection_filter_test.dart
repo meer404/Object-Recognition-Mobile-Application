@@ -53,7 +53,10 @@ void main() {
       filter.update(<DetectionResult>[_det(x: 0.5)]);
       final FilterResult result = filter.update(<DetectionResult>[]);
       expect(result.confirmed, hasLength(1));
-      expect(result.confirmed.single.detection.box.center.dx, closeTo(0.5, 1e-9));
+      expect(
+        result.confirmed.single.detection.box.center.dx,
+        closeTo(0.5, 1e-9),
+      );
     });
 
     test('respects other N and M settings', () {
@@ -98,7 +101,11 @@ void main() {
           .single
           .trackId;
       expect(
-        filter.update(<DetectionResult>[_det(x: 0.54)]).confirmed.single.trackId,
+        filter
+            .update(<DetectionResult>[_det(x: 0.54)])
+            .confirmed
+            .single
+            .trackId,
         id,
       );
     });
@@ -119,7 +126,10 @@ void main() {
 
     test('different classes never share a track', () {
       filter.update(<DetectionResult>[_det(classId: 56)]);
-      expect(filter.update(<DetectionResult>[_det(classId: 60)]).confirmed, isEmpty);
+      expect(
+        filter.update(<DetectionResult>[_det(classId: 60)]).confirmed,
+        isEmpty,
+      );
     });
 
     test('a jump with no overlap starts a new track', () {
@@ -139,7 +149,11 @@ void main() {
 
     test('a track stays live until its whole window is empty', () {
       filter.update(<DetectionResult>[_det()]);
-      final int id = filter.update(<DetectionResult>[_det()]).confirmed.single.trackId;
+      final int id = filter
+          .update(<DetectionResult>[_det()])
+          .confirmed
+          .single
+          .trackId;
       filter.update(<DetectionResult>[]);
       expect(filter.update(<DetectionResult>[]).liveTrackIds, contains(id));
       expect(filter.update(<DetectionResult>[]).liveTrackIds, isEmpty);
@@ -147,7 +161,11 @@ void main() {
 
     test('an object that came back gets a new track id', () {
       filter.update(<DetectionResult>[_det()]);
-      final int first = filter.update(<DetectionResult>[_det()]).confirmed.single.trackId;
+      final int first = filter
+          .update(<DetectionResult>[_det()])
+          .confirmed
+          .single
+          .trackId;
       for (int i = 0; i < 3; i++) {
         filter.update(<DetectionResult>[]);
       }

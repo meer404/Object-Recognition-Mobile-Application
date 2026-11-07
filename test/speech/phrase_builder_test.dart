@@ -133,9 +133,10 @@ void main() {
       expect(kurdishLabels.containsKey(5), isFalse, reason: 'bus');
       expect(builder.build(<DetectionResult>[_det(5)]), isNull);
       expect(
-        builder
-            .build(<DetectionResult>[_det(5, size: 0.9), _det(_cup, size: 0.1)])!
-            .classes,
+        builder.build(<DetectionResult>[
+          _det(5, size: 0.9),
+          _det(_cup, size: 0.1),
+        ])!.classes,
         <int>{_cup},
       );
     });
