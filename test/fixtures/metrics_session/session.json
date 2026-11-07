@@ -29,6 +29,7 @@
     "showDebugOverlay": false,
     "metricsFlushIntervalMs": 5000,
     "deviceSampleIntervalMs": 10000,
+    "detectionTimeoutMs": 10000,
     "evaluationMode": false
   }
 }
