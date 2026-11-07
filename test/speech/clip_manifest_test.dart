@@ -25,6 +25,18 @@ void main() {
     expect(missing, <String>['x', 'y']);
   });
 
+  test('withClips adds entries and keeps the original intact', () {
+    final ClipManifest base = ClipManifest(<String, String>{'a': 'a.m4a'});
+    final ClipManifest extended = base.withClips(<String, String>{
+      'b': 'local/b.mp3',
+    });
+    expect(extended.resolve(<String>['a', 'b']), <String>[
+      'assets/audio/a.m4a',
+      'assets/audio/local/b.mp3',
+    ]);
+    expect(base.contains('b'), isFalse);
+  });
+
   test('rejects malformed manifests', () {
     for (final String bad in <String>[
       '[]',

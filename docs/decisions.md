@@ -129,7 +129,7 @@ Status values: `accepted`, `provisional` (to be confirmed in a later phase),
   recorded clips stay the primary path. This entry must be decided by the
   device results below, not by this expectation.
 - **Procedure:** debug build → home → "Speech probe (debug)" → enter the
-  device model → tap every TTS button and "Recorded clip" → rate each attempt
+  device model → tap every TTS button and both clip buttons → rate each attempt
   by ear (ideally by a native speaker) → "Copy Markdown report" → paste below.
 - **Decision rule:** TTS becomes an optional user setting only on devices
   where a `ckb` attempt is rated "Understood". Otherwise it stays disabled.
@@ -275,3 +275,25 @@ _None yet. Paste one probe report per device here._
 - **Other mismatches with CLAUDE.md's examples:** "table" is COCO `dining table`
   (a desk may not be detected as one; unmeasured); "bag" is split into
   backpack and handbag.
+
+## D-015 — kurdishtts.com audio stays local (free-plan terms)
+- **Date:** 2026-11-07 · **Phase:** 1A follow-up · **Status:** accepted for
+  testing; shipping is an open decision for the author
+- **What:** one synthetic test clip («لەبەردەمت مێزێک هەیە.», voice `sorani_85`,
+  model `v3`, MP3, 24 kHz mono, 12.5 KB) is stored in the git-ignored
+  `assets/audio/local/`. It plays from the debug speech probe only, and is
+  not in the committed manifest. The app never calls the service at runtime.
+- **Why:** kurdishtts.com/privacyterms (read 2026-11-07), Terms §7: "Free:
+  evaluation and testing only, with no publication and no commercial use."
+  The right to "include the output inside a product you sell or operate" is
+  listed under the Pro plan. Committing the clip to the public repository could
+  count as publication. This is a reading of the terms, not legal advice.
+- **Open question:** shipping synthetic clips would need the Pro plan (listed at
+  USD 29/month on 2026-11-07) and a native-speaker rating. Recorded clips from a
+  native speaker remain the default. Whether the user study may use free-plan
+  audio is unconfirmed; ask the vendor or use recordings.
+- **Release risk:** `assets/audio/local/` is bundled into every build made on
+  a machine that has the file. Empty it before building anything for other
+  people, including the user study.
+- **For the paper:** any synthetic audio used must be reported as synthetic,
+  with its voice and model version.

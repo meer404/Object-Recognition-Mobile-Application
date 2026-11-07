@@ -11,6 +11,10 @@ consistently and document every session.
 > inventory below will be finalised then. For now, record only the test
 > sentence so the playback path can be tried on a real device.
 
+> **Synthetic clips are for evaluation only, for now.** A test clip from
+> kurdishtts.com lives in the git-ignored `assets/audio/local/`. Under the free
+> plan's terms it must not be committed, published or shipped (D-015).
+
 ## 1. Speaker and consent
 - One native Sorani speaker for the whole set (consistent voice). Note their
   dialect (e.g. Sulaymaniyah / Erbil).

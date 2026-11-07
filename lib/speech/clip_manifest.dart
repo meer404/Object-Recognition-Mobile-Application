@@ -50,6 +50,10 @@ class ClipManifest {
 
   Iterable<String> get keys => _clips.keys;
 
+  /// A copy with [extra] clips added, for debug-only local files.
+  ClipManifest withClips(Map<String, String> extra) =>
+      ClipManifest(<String, String>{..._clips, ...extra});
+
   bool contains(String key) => _clips.containsKey(key);
 
   /// Resolves [keys] to full asset paths, preserving order. Unknown keys are

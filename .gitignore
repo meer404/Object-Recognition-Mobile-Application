@@ -44,6 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Evaluation-only audio that must not be published (decisions.md D-015)
+assets/audio/local/*
+!assets/audio/local/.gitkeep
+
 # Python tooling (tools/)
 tools/.venv/
 __pycache__/

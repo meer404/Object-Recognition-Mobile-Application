@@ -5,12 +5,21 @@ import 'package:flutter/services.dart';
 
 import '../settings/app_settings.dart';
 import '../speech/audio_clip_speech.dart';
+import '../speech/clip_manifest.dart';
+import '../speech/just_audio_clip_player.dart';
 import '../speech/speech_service.dart';
 import 'probe_report.dart';
 import 'tts_probe.dart';
 
 /// Clip key played by the "recorded clip" test.
 const String probeClipKey = 'test_sentence';
+
+/// Synthetic Sorani test clip, for evaluation only. The file is git-ignored
+/// and may be absent, in which case the attempt reports a failure. It is
+/// not in the committed manifest because the free kurdishtts.com plan forbids
+/// publishing its audio (decisions.md D-015).
+const String probeLocalClipKey = 'test_sentence_tts';
+const String probeLocalClipFile = 'local/test_sentence_tts.mp3';
 
 /// DEBUG-ONLY researcher tool (Phase 1A). It lists TTS engines, languages and
 /// voices, tries to speak the Sorani test sentence, plays a recorded clip,
@@ -31,7 +40,12 @@ class _SpeechProbeScreenState extends State<SpeechProbeScreen> {
   late final TtsProbe _probe = TtsProbe(
     startTimeout: widget.settings.speechStartTimeout,
   );
-  final AudioClipSpeech _clips = AudioClipSpeech.standard();
+  final AudioClipSpeech _clips = AudioClipSpeech(
+    player: JustAudioClipPlayer(),
+    loadManifest: () async => (await ClipManifest.load(
+      rootBundle,
+    )).withClips(<String, String>{probeLocalClipKey: probeLocalClipFile}),
+  );
   final TextEditingController _device = TextEditingController();
   final List<SpeakAttempt> _attempts = <SpeakAttempt>[];
 
@@ -81,10 +95,10 @@ class _SpeechProbeScreenState extends State<SpeechProbeScreen> {
     });
   }
 
-  Future<SpeakAttempt> _playClip() async {
+  Future<SpeakAttempt> _playClip(String key, String label) async {
     if (!_clipsReady) {
       return SpeakAttempt(
-        label: 'Recorded clip `$probeClipKey`',
+        label: label,
         started: false,
         error: 'clip player not ready: $_clipError',
       );
@@ -92,16 +106,16 @@ class _SpeechProbeScreenState extends State<SpeechProbeScreen> {
     await _probe.stop();
     final Stopwatch watch = Stopwatch()..start();
     final SpeechOutcome outcome = await _clips.speak(
-      const SpeechRequest(
+      SpeechRequest(
         text: probeTestSentence,
-        clipKeys: <String>[probeClipKey],
+        clipKeys: <String>[key],
         interrupt: true,
       ),
     );
     watch.stop();
     final bool started = outcome == SpeechOutcome.started;
     return SpeakAttempt(
-      label: 'Recorded clip `$probeClipKey`',
+      label: label,
       started: started,
       startLatencyMs: started ? watch.elapsedMicroseconds / 1000 : null,
       error: started ? null : 'outcome: ${outcome.name}',
@@ -200,8 +214,23 @@ class _SpeechProbeScreenState extends State<SpeechProbeScreen> {
                 child: Text('TTS $lang'),
               ),
             FilledButton(
-              onPressed: _busy ? null : () => _run(_playClip),
-              child: const Text('Recorded clip'),
+              onPressed: _busy
+                  ? null
+                  : () => _run(
+                      () => _playClip(probeClipKey, 'Placeholder tone clip'),
+                    ),
+              child: const Text('Placeholder tone clip'),
+            ),
+            FilledButton(
+              onPressed: _busy
+                  ? null
+                  : () => _run(
+                      () => _playClip(
+                        probeLocalClipKey,
+                        'Synthetic Sorani clip (kurdishtts sorani_85 v3)',
+                      ),
+                    ),
+              child: const Text('Synthetic Sorani clip (local)'),
             ),
           ],
         ),
