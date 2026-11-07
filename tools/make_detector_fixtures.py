@@ -33,6 +33,8 @@ PAD = 114
 SCORE_FLOOR = 0.01
 CONF = 0.25
 NMS_IOU = 0.7
+PHOTO_MIN_CONFIDENCE = 0.5
+PHOTO_CLASSES = {0, 5}  # person, bus
 
 
 def letterbox(rgb: np.ndarray, size: int) -> tuple[np.ndarray, tuple[int, int, int, int]]:
@@ -155,10 +157,52 @@ def detector_fixture() -> None:
     print(f"{len(sparse)} of {anchors} anchors kept, {len(expected)} expected detections")
 
 
+def photo_frames() -> None:
+    """Real camera-like frames for the detector's end-to-end test, in build/.
+
+    Not committed, because they contain Ultralytics' example photo. `expected` is
+    the reference decode's detections at a confidence the model keeps reliably.
+    """
+    out = REPO / "build" / "fixtures"
+    out.mkdir(parents=True, exist_ok=True)
+    image = Path(ultralytics.__file__).parent / "assets" / "bus.jpg"
+    bgr = cv2.imread(str(image))
+    h, w = bgr.shape[:2]
+    # About the size of a medium camera preset, with an even height for YUV.
+    width, height = 480, round(h * 480 / w)
+    height += height % 2
+    small = cv2.resize(bgr, (width, height), interpolation=cv2.INTER_AREA)
+    (out / "photo_upright.bgra").write_bytes(cv2.cvtColor(small, cv2.COLOR_BGR2BGRA).tobytes())
+
+    # The sensor image that becomes `small` when turned 90 degrees clockwise.
+    sensor = cv2.rotate(small, cv2.ROTATE_90_COUNTERCLOCKWISE).astype(np.float32)
+    b, g, r = sensor[:, :, 0], sensor[:, :, 1], sensor[:, :, 2]
+    # Full-range BT.601, what Android cameras produce.
+    y = 0.299 * r + 0.587 * g + 0.114 * b
+    u = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b
+    v = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b
+
+    def plane(values: np.ndarray) -> bytes:
+        return np.clip(values + 0.5, 0, 255).astype(np.uint8).tobytes()
+
+    (out / "photo_sensor.y").write_bytes(plane(y))
+    half = (y.shape[1] // 2, y.shape[0] // 2)
+    (out / "photo_sensor.u").write_bytes(plane(cv2.resize(u, half, interpolation=cv2.INTER_AREA)))
+    (out / "photo_sensor.v").write_bytes(plane(cv2.resize(v, half, interpolation=cv2.INTER_AREA)))
+
+    expected = json.loads((OUT / "detector_bus_320.json").read_text(encoding="utf-8"))["expected"]
+    confident = [e for e in expected if e["confidence"] >= PHOTO_MIN_CONFIDENCE and e["class"] in PHOTO_CLASSES]
+    (out / "photo_frames.json").write_text(
+        json.dumps({"width": width, "height": height, "expected": confident}), encoding="utf-8"
+    )
+    print(f"photo frames {width}x{height}, {len(confident)} reference detections")
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     preprocess_fixture()
     detector_fixture()
+    photo_frames()
     for path in sorted(OUT.glob("*.json")):
         print(f"wrote {path.relative_to(REPO)} ({path.stat().st_size // 1024} KB)")
 
