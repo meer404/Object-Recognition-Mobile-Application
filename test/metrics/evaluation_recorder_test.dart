@@ -146,19 +146,29 @@ void main() {
   });
 
   test('the first sample has no rates; later ones are per second', () async {
+    // Frames dropped before the session must not show up in it. On the phone,
+    // the first row reported drops since the app started (42 and 108).
+    counts = const SchedulerCounts(
+      accepted: 10,
+      droppedBusy: 42,
+      droppedRate: 108,
+    );
     await recorder.apply(on);
     final DeviceSample first = logger.samples.single;
     expect(first.cameraFps, isNull);
     expect(first.inferenceFps, isNull);
+    expect(first.droppedBusy, isNull, reason: 'baseline, not app lifetime');
+    expect(first.droppedRate, isNull);
     expect(first.rssMb, closeTo(200, 1e-9));
     expect(first.batteryPercent, 80);
 
-    // 10 s later: 300 frames arrived, 38 inferred, 2 dropped busy, 260 by rate.
+    // 10 s later: 300 more frames arrived, 38 inferred, 2 dropped busy, 260 by
+    // rate.
     clock = const Duration(seconds: 10);
     counts = const SchedulerCounts(
-      accepted: 38,
-      droppedBusy: 2,
-      droppedRate: 260,
+      accepted: 48,
+      droppedBusy: 44,
+      droppedRate: 368,
     );
     await recorder.sample();
     final DeviceSample second = logger.samples.last;

@@ -84,11 +84,11 @@ void main() {
           batteryState: 'unknown',
           cameraFps: null,
           inferenceFps: double.nan,
-          droppedBusy: 0,
-          droppedRate: 0,
+          droppedBusy: null,
+          droppedRate: null,
         ),
       );
-      expect(row, '2026-11-08T14:30:05.123Z,100.0,,unknown,,,0,0');
+      expect(row, '2026-11-08T14:30:05.123Z,100.0,,unknown,,,,');
     });
   });
 

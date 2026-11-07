@@ -55,9 +55,10 @@ class DeviceSample {
   final double? cameraFps;
   final double? inferenceFps;
 
-  /// Frames dropped during that interval, by reason.
-  final int droppedBusy;
-  final int droppedRate;
+  /// Frames dropped during that interval, by reason. Null for the first
+  /// sample of a session, which is only the baseline.
+  final int? droppedBusy;
+  final int? droppedRate;
 }
 
 /// What a measurement session ran on. Written once as `session.json`.
@@ -155,8 +156,8 @@ String deviceCsvRow(DeviceSample s) => <String>[
   csvField(s.batteryState),
   _number(s.cameraFps, 2),
   _number(s.inferenceFps, 2),
-  '${s.droppedBusy}',
-  '${s.droppedRate}',
+  s.droppedBusy?.toString() ?? '',
+  s.droppedRate?.toString() ?? '',
 ].join(',');
 
 /// Quotes a CSV field if needed (RFC 4180).

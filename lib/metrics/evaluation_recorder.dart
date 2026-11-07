@@ -154,8 +154,14 @@ class EvaluationRecorder {
         batteryState: state,
         cameraFps: perSecond(counts.received - (previous?.received ?? 0)),
         inferenceFps: perSecond(counts.accepted - (previous?.accepted ?? 0)),
-        droppedBusy: counts.droppedBusy - (previous?.droppedBusy ?? 0),
-        droppedRate: counts.droppedRate - (previous?.droppedRate ?? 0),
+        // The first sample is the baseline: before it, drops belong to no
+        // session (on the phone it reported drops since app start).
+        droppedBusy: previous == null
+            ? null
+            : counts.droppedBusy - previous.droppedBusy,
+        droppedRate: previous == null
+            ? null
+            : counts.droppedRate - previous.droppedRate,
       ),
     );
   }

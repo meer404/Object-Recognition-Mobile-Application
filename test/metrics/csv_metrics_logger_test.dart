@@ -44,8 +44,8 @@ void writeReferenceSession(MetricsLogger logger) {
         batteryState: 'discharging',
         cameraFps: i == 0 ? null : 30.0,
         inferenceFps: i == 0 ? null : 3.5 + i * 0.25,
-        droppedBusy: i,
-        droppedRate: i == 0 ? 0 : 260,
+        droppedBusy: i == 0 ? null : i,
+        droppedRate: i == 0 ? null : 260,
       ),
     );
   }
