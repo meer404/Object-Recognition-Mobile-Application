@@ -61,17 +61,31 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   /// Pauses while settings are open, so speech cannot talk over them.
+  ///
+  /// A second long press while this runs is ignored. Otherwise both would see
+  /// "running", the second toggle would resume the camera behind settings, and
+  /// two settings pages would stack (a screen reader can repeat the action).
   Future<void> _openSettings() async {
-    final bool wasRunning = _app.status == AppStatus.running;
-    if (wasRunning) await _app.togglePause();
-    if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => SettingsScreen(controller: _app)),
-    );
-    if (wasRunning && _app.status == AppStatus.paused) {
-      await _app.togglePause();
+    if (_openingSettings) return;
+    _openingSettings = true;
+    try {
+      final bool wasRunning = _app.status == AppStatus.running;
+      if (wasRunning) await _app.togglePause();
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => SettingsScreen(controller: _app),
+        ),
+      );
+      if (wasRunning && _app.status == AppStatus.paused) {
+        await _app.togglePause();
+      }
+    } finally {
+      _openingSettings = false;
     }
   }
+
+  bool _openingSettings = false;
 
   static String _statusText(AppStatus status) => switch (status) {
     AppStatus.initializing => UiStrings.preparing,

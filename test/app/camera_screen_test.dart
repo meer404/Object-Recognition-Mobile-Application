@@ -112,6 +112,30 @@ void main() {
     });
   });
 
+  group('gesture safety', () {
+    testWidgets('a repeated long press opens settings once, camera paused', (
+      WidgetTester tester,
+    ) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await pumpScreen(tester);
+      // Two long-press actions back to back, as a screen reader can deliver.
+      final SemanticsNode node = tester.getSemantics(
+        find.bySemanticsLabel(UiStrings.running),
+      );
+      node.owner!.performAction(node.id, SemanticsAction.longPress);
+      node.owner!.performAction(node.id, SemanticsAction.longPress);
+      await tester.pumpAndSettle();
+      expect(find.byType(SettingsScreen), findsOneWidget);
+      expect(app.status, AppStatus.paused);
+
+      await tester.tap(find.byTooltip(UiStrings.back));
+      await tester.pumpAndSettle();
+      expect(find.byType(SettingsScreen), findsNothing);
+      expect(app.status, AppStatus.running);
+      handle.dispose();
+    });
+  });
+
   group('screen', () {
     testWidgets('shows the preview only when the camera is usable', (
       WidgetTester tester,
