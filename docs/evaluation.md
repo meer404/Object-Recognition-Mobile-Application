@@ -12,6 +12,9 @@ Per-stage latency (preprocessing, inference, post-processing,
 frame-to-speech-start), FPS, RAM and battery from the app's CSV export
 (`tools/analyze_metrics.py`). Report median and P95.
 
+Collected with the app's evaluation mode, in **profile or release builds only**
+(D-021). Procedure and file formats: `tools/README.md`, `docs/decisions.md` D-021.
+
 ## 3. Kurdish speech quality
 Native-speaker rating form.
 

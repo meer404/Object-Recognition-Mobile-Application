@@ -18,7 +18,8 @@ device.
 | 1C | 20 object classes with draft Sorani labels | done, native-speaker review pending |
 | 2 | Camera, frame scheduler, main screen, gestures | done, device test pending |
 | 3 | On-device detection, tracking, Sorani sentences | done, device test pending |
-| 4–5 | Optimisation, evaluation | next |
+| 4 | Metrics logging and export | logger done; on-device profiling pending |
+| 5 | Evaluation | planned |
 
 ## Build and test
 Requires Flutter (stable channel). Android API 24+, iOS 13+.

@@ -426,3 +426,46 @@ _None yet. Paste one probe report per device here._
 - **Metrics:** `RecognitionPipeline` reports `FrameMetrics` per frame. Frame-to-speech
   runs from frame arrival to `speak()` starting. Writing them to CSV is Phase 4.
 
+## D-021 — Measurement sessions
+- **Date:** 2026-11-08 · **Phase:** 4 · **Status:** accepted (plan approved by
+  author); real numbers need a phone
+- **Build mode rule:** debug builds run Dart in JIT mode and are much slower, so
+  **only profile or release sessions may back a performance claim**. Every session
+  records its build mode, `session.json` has `valid_for_performance_claims`, and
+  the analyzer prints a warning for debug sessions. Build with
+  `--dart-define=GIT_COMMIT=$(git rev-parse HEAD)` so each session names its code.
+- **Evaluation mode:** a labelled Sorani switch in Settings, in every build, off
+  by default. The Phase 4 prompt says "hidden", but the author chose a visible
+  switch, because a hidden gesture is hard to find and use with a screen reader.
+  It is not persisted: it is off again after a restart. Nothing is recorded while
+  it is off, and **no images are ever saved** (CLAUDE.md privacy rule).
+- **Files** (one folder per session in the app documents directory,
+  `metrics/<UTC timestamp>/`):
+  - `session.json`: build mode, app version, git commit, device and OS,
+    accelerator, model file and size, every `AppSettings` value. A test checks
+    that no setting is missing.
+  - `frames.csv`: per processed frame, the preprocess, inference, postprocess and
+    total ms (time inside the detector, excluding the wait for a free worker), the
+    detection count, and frame-to-speech-start ms (empty, not zero, when the frame
+    started no speech).
+  - `device.csv`: every 10 s, RSS MB, battery % and state, camera frames/s,
+    inferences/s, and frames dropped while busy or by the rate limit. Rates and
+    drops cover the interval since the previous sample; the first sample has none.
+- **What RSS measures:** the resident memory of the whole app process as the OS
+  reports it (`ProcessInfo.currentRss`), including native memory such as the model
+  and camera buffers. It is not the Dart heap alone, and it is not peak memory
+  between samples.
+- **Battery:** whole-device level in whole percent, so short sessions show little
+  change; it is also affected by screen brightness and other apps. Profile for at
+  least 10 minutes, with the same brightness, and report the drop per hour.
+- **Durability:** rows are flushed every 5 s and on pause, background and close,
+  so a crash loses at most about 5 s.
+- **Export:** a Sorani button shares the latest session through the system share
+  sheet (`share_plus`). The user chooses the destination; the app makes no network
+  calls. In debug builds on Android, `adb shell run-as` also works.
+- **Analysis:** `tools/analyze_metrics.py` gives n, median, P95 (linear
+  interpolation, as numpy's default), min and max per stage. Its tests run on a
+  session written by the Dart logger (`test/fixtures/metrics_session/`).
+- **Permissions:** the four new plugins declare no Android permissions. The release
+  manifest was re-checked after adding them (below).
+
