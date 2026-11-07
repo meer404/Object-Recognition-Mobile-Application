@@ -51,7 +51,7 @@ def dhash(path: Path) -> int:
     """
     with Image.open(path) as image:
         small = image.convert("L").resize((HASH_WIDTH, HASH_HEIGHT), Image.Resampling.LANCZOS)
-        pixels = list(small.getdata())
+        pixels = small.tobytes()  # One byte per pixel in mode "L".
     bits = 0
     for row in range(HASH_HEIGHT):
         for col in range(HASH_WIDTH - 1):
