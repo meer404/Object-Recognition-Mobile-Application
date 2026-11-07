@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kurdish_vision/app/app_controller.dart';
 import 'package:kurdish_vision/app/app_theme.dart';
@@ -115,6 +116,24 @@ void main() {
     await pump(tester, withExport: false);
     expect(find.text(UiStrings.exportMetrics), findsNothing);
   });
+
+  testWidgets(
+    'the back button is read in Sorani, with no Arabic label',
+    (WidgetTester tester) async {
+      // On Android, BackButtonIcon adds Flutter's built-in "back" label, which
+      // the ckb fallback serves in Arabic («رجوع», D-004). Found on a real phone.
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await pump(tester);
+      final SemanticsNode back = tester.getSemantics(
+        find.byTooltip(UiStrings.back),
+      );
+      final String spoken = '${back.label} ${back.tooltip}';
+      expect(spoken, contains(UiStrings.back));
+      expect(spoken, isNot(contains('رجوع')));
+      handle.dispose();
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
 
   testWidgets('meets tap-target, labelling and contrast guidelines', (
     WidgetTester tester,

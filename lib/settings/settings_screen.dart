@@ -18,7 +18,10 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(
         // Not the default back button: its tooltip would be Arabic (D-004).
         leading: IconButton(
-          icon: const BackButtonIcon(),
+          // On Android, BackButtonIcon labels itself with Flutter's built-in
+          // "back", which our ckb fallback serves in Arabic (found on a phone).
+          // Excluding it leaves the Sorani tooltip as the only label.
+          icon: const ExcludeSemantics(child: BackButtonIcon()),
           tooltip: UiStrings.back,
           onPressed: () => Navigator.of(context).pop(),
         ),
