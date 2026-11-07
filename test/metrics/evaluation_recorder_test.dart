@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kurdish_vision/metrics/evaluation_recorder.dart';
 import 'package:kurdish_vision/metrics/metrics_logger.dart';
 import 'package:kurdish_vision/settings/app_settings.dart';
 
 class _FakeLogger implements MetricsLogger {
+  Object? startError;
+
   final List<FrameMetrics> frames = <FrameMetrics>[];
   final List<DeviceSample> samples = <DeviceSample>[];
   int starts = 0;
@@ -16,6 +20,9 @@ class _FakeLogger implements MetricsLogger {
 
   @override
   Future<String> start(SessionInfo info) async {
+    final Object? error = startError;
+    startError = null;
+    if (error != null) throw error;
     starts++;
     active = true;
     return 'session-$starts';
@@ -199,6 +206,16 @@ void main() {
     await recorder.apply(on);
     expect(logger.samples.single.batteryPercent, isNull);
     expect(logger.samples.single.batteryState, 'unknown');
+  });
+
+  test('a session that fails to start can be retried', () async {
+    logger.startError = const FileSystemException('no documents dir');
+    await recorder.apply(on); // Must not throw.
+    expect(recorder.isRecording, isFalse);
+
+    await recorder.apply(off);
+    await recorder.apply(on);
+    expect(recorder.isRecording, isTrue, reason: 'the switch still works');
   });
 
   test('frames are forwarded while recording', () async {

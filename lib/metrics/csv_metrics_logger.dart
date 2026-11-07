@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'metrics_logger.dart';
@@ -75,16 +76,23 @@ class CsvMetricsLogger implements MetricsLogger {
     final String device = _device.toString();
     _frames = StringBuffer();
     _device = StringBuffer();
+    // A failed write loses only these rows. It is logged, not thrown: flushes
+    // run from timers and lifecycle events nobody awaits, and the next write
+    // must still happen.
     return _writes = _writes.then((_) async {
-      if (frames.isNotEmpty) {
-        await File(
-          _path(session, framesFile),
-        ).writeAsString(frames, mode: FileMode.append, flush: true);
-      }
-      if (device.isNotEmpty) {
-        await File(
-          _path(session, deviceFile),
-        ).writeAsString(device, mode: FileMode.append, flush: true);
+      try {
+        if (frames.isNotEmpty) {
+          await File(
+            _path(session, framesFile),
+          ).writeAsString(frames, mode: FileMode.append, flush: true);
+        }
+        if (device.isNotEmpty) {
+          await File(
+            _path(session, deviceFile),
+          ).writeAsString(device, mode: FileMode.append, flush: true);
+        }
+      } on FileSystemException catch (error) {
+        developer.log('metrics rows lost: $error', name: 'metrics');
       }
     });
   }

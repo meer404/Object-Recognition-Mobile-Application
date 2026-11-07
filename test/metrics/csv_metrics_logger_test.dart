@@ -157,6 +157,20 @@ void main() {
     },
   );
 
+  test('a failed write is not fatal and later writes still happen', () async {
+    final String folder = await logger.start(_info());
+    // Simulate the files disappearing (e.g. storage cleared) mid-session.
+    Directory(folder).deleteSync(recursive: true);
+    logger.logFrame(frame(0));
+    await logger.flush(); // Must not throw.
+
+    Directory(folder).createSync(recursive: true);
+    File('$folder${Platform.pathSeparator}frames.csv').writeAsStringSync('');
+    logger.logFrame(frame(250));
+    await logger.flush();
+    expect(read(folder, 'frames.csv'), '${frameCsvRow(frame(250))}\n');
+  });
+
   test('a new session in the same second gets its own folder', () async {
     final String first = await logger.start(_info());
     final String second = await logger.start(_info());

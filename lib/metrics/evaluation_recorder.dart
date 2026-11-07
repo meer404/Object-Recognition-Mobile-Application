@@ -69,7 +69,7 @@ class EvaluationRecorder {
   bool get isRecording => _logger.isActive;
 
   /// Starts or stops a session to match [settings].
-  Future<void> apply(AppSettings settings) => _queue = _queue.then((_) async {
+  Future<void> apply(AppSettings settings) => _enqueue(() async {
     if (settings.evaluationMode && !_logger.isActive) {
       await _start(settings);
     } else if (!settings.evaluationMode && _logger.isActive) {
@@ -85,7 +85,20 @@ class EvaluationRecorder {
   /// Files to export: the running or most recent session.
   Future<List<String>> exportFiles() => _logger.latestSessionFiles();
 
-  Future<void> dispose() => _queue = _queue.then((_) => _stop());
+  Future<void> dispose() => _enqueue(_stop);
+
+  /// Runs [operation] after the queued ones. A failure (e.g. no documents
+  /// directory) is logged and the queue carries on, so the switch keeps working.
+  Future<void> _enqueue(Future<void> Function() operation) => _queue = _queue
+      .then((_) => operation())
+      .catchError((Object error, StackTrace stackTrace) {
+        developer.log(
+          'evaluation session failed',
+          name: 'metrics',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      });
 
   Future<void> _start(AppSettings settings) async {
     final String folder = await _logger.start(await _sessionInfo());
