@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 
 import '../camera/camera_frame.dart';
 import '../settings/app_settings.dart';
@@ -43,8 +44,6 @@ class YoloDetector implements ObjectDetector {
 
   Isolate? _isolate;
   SendPort? _worker;
-  ReceivePort? _replies;
-  ReceivePort? _exits;
   Completer<void>? _ready;
   final Map<int, Completer<DetectionOutput>> _pending =
       <int, Completer<DetectionOutput>>{};
@@ -52,38 +51,68 @@ class YoloDetector implements ObjectDetector {
   String? _accelerator;
   bool _closed = false;
 
+  /// Bumped for every worker. Messages from an older worker are ignored, so a
+  /// late exit event cannot disturb its replacement.
+  int _generation = 0;
+
   /// Which accelerator the model runs on, once loaded.
   String? get accelerator => _accelerator;
 
   @override
   bool get isLoaded => _worker != null && !_closed;
 
+  /// Whether a worker isolate exists, for tests of cleanup.
+  @visibleForTesting
+  bool get hasWorkerIsolate => _isolate != null;
+
   @override
   Future<void> load() async {
     if (isLoaded) return;
+    if (_closed) throw const DetectorException('detector is disposed');
     final Uint8List bytes = await _loadModelBytes();
+    if (_closed) {
+      throw const DetectorException('detector was disposed while loading');
+    }
+
+    final int generation = ++_generation;
     final ReceivePort replies = ReceivePort();
     final ReceivePort exits = ReceivePort();
     final Completer<void> ready = Completer<void>();
-    _replies = replies;
-    _exits = exits;
     _ready = ready;
-    replies.listen(_onReply);
-    exits.listen((_) => _onWorkerExit());
-    _isolate = await Isolate.spawn<_WorkerStart>(
-      _workerMain,
-      _WorkerStart(
-        replies: replies.sendPort,
-        modelBytes: TransferableTypedData.fromList(<Uint8List>[bytes]),
-        settings: _settings,
-        allowedClasses: _allowedClasses,
-        runnerFactory: _runnerFactory,
-        threads: inferenceThreads,
-      ),
-      debugName: 'detector',
-      onExit: exits.sendPort,
-    );
+    replies.listen((Object? message) {
+      if (generation == _generation) _onReply(message);
+    });
+    exits.listen((_) {
+      replies.close();
+      exits.close();
+      if (generation == _generation) _failEverything('detector worker stopped');
+    });
+
+    try {
+      _isolate = await Isolate.spawn<_WorkerStart>(
+        _workerMain,
+        _WorkerStart(
+          replies: replies.sendPort,
+          modelBytes: TransferableTypedData.fromList(<Uint8List>[bytes]),
+          settings: _settings,
+          allowedClasses: _allowedClasses,
+          runnerFactory: _runnerFactory,
+          threads: inferenceThreads,
+        ),
+        debugName: 'detector',
+        onExit: exits.sendPort,
+      );
+    } catch (_) {
+      replies.close();
+      exits.close();
+      rethrow;
+    }
     await ready.future;
+    if (_closed) {
+      // dispose() ran while the worker was starting: do not leave it running.
+      _shutdownWorker();
+      throw const DetectorException('detector was disposed while loading');
+    }
   }
 
   @override
@@ -98,7 +127,21 @@ class YoloDetector implements ObjectDetector {
     final Completer<DetectionOutput> completer = Completer<DetectionOutput>();
     _pending[id] = completer;
     worker.send(_DetectRequest(id, frame));
-    return completer.future;
+    final Duration limit = _settings.detectionTimeout;
+    return completer.future.timeout(
+      limit,
+      onTimeout: () {
+        // A stuck native call cannot be cancelled, only its isolate killed.
+        final String error =
+            'inference timed out after ${limit.inMilliseconds} ms';
+        _pending.remove(id);
+        _generation++;
+        _isolate?.kill(priority: Isolate.immediate);
+        _isolate = null;
+        _failEverything(error);
+        throw DetectorException(error);
+      },
+    );
   }
 
   void _onReply(Object? message) {
@@ -116,12 +159,6 @@ class YoloDetector implements ObjectDetector {
     }
   }
 
-  void _onWorkerExit() {
-    _failEverything('detector worker stopped');
-    _replies?.close();
-    _exits?.close();
-  }
-
   void _failEverything(String error) {
     _worker = null;
     final Completer<void>? ready = _ready;
@@ -134,17 +171,23 @@ class YoloDetector implements ObjectDetector {
     _pending.clear();
   }
 
-  @override
-  Future<void> dispose() async {
-    if (_closed) return;
-    _closed = true;
+  /// Asks a ready worker to close its interpreter, or kills one still starting.
+  void _shutdownWorker() {
     final SendPort? worker = _worker;
     if (worker != null) {
       worker.send(const _Shutdown());
     } else {
       _isolate?.kill(priority: Isolate.immediate);
     }
+    _worker = null;
     _isolate = null;
+  }
+
+  @override
+  Future<void> dispose() async {
+    if (_closed) return;
+    _closed = true;
+    _shutdownWorker();
   }
 }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
@@ -67,6 +68,18 @@ class _KillingRunner extends _FakeRunner {
 
 ModelRunner _killingFactory(Uint8List bytes, int size, int threads) =>
     _KillingRunner();
+
+/// Never returns, like a stuck native call. A busy loop, so killing the isolate
+/// can interrupt it.
+class _HangingRunner extends _FakeRunner {
+  @override
+  Float32List run(Float32List input) {
+    while (true) {}
+  }
+}
+
+ModelRunner _hangingFactory(Uint8List bytes, int size, int threads) =>
+    _HangingRunner();
 
 YoloDetector _detector(
   ModelRunnerFactory factory, {
@@ -193,6 +206,48 @@ void main() {
         throwsA(isA<DetectorException>()),
       );
       expect(detector.isLoaded, isFalse);
+    });
+
+    test('a hung inference times out instead of blocking forever', () async {
+      final YoloDetector detector = _detector(
+        _hangingFactory,
+        settings: _settings.copyWith(
+          detectionTimeout: const Duration(milliseconds: 200),
+        ),
+      );
+      await detector.load();
+      await expectLater(
+        detector.detect(_frame()),
+        throwsA(
+          isA<DetectorException>().having(
+            (DetectorException e) => e.message,
+            'message',
+            contains('timed out'),
+          ),
+        ),
+      );
+      expect(detector.isLoaded, isFalse, reason: 'so the app reports it');
+
+      // It can be loaded again afterwards.
+      await detector.load();
+      expect(detector.isLoaded, isTrue);
+      await detector.dispose();
+    });
+
+    test('dispose during load leaves no worker running', () async {
+      final Completer<Uint8List> bytes = Completer<Uint8List>();
+      final YoloDetector detector = YoloDetector(
+        settings: _settings,
+        allowedClasses: const <int>{1},
+        loadModelBytes: () => bytes.future,
+        runnerFactory: _workingFactory,
+      );
+      final Future<void> loading = detector.load();
+      await detector.dispose();
+      bytes.complete(Uint8List(4));
+      await expectLater(loading, throwsA(isA<DetectorException>()));
+      expect(detector.isLoaded, isFalse);
+      expect(detector.hasWorkerIsolate, isFalse);
     });
 
     test('detect after dispose fails', () async {

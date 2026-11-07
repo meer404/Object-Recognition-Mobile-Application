@@ -30,6 +30,7 @@ class AppSettings {
     this.showDebugOverlay = false,
     this.metricsFlushInterval = const Duration(seconds: 5),
     this.deviceSampleInterval = const Duration(seconds: 10),
+    this.detectionTimeout = const Duration(seconds: 10),
     this.evaluationMode = false,
   }) : assert(
          targetInferencesPerSecond >= minInferencesPerSecond &&
@@ -108,6 +109,11 @@ class AppSettings {
   /// How often RAM, battery and frame rates are sampled during evaluation.
   final Duration deviceSampleInterval;
 
+  /// A detection taking longer than this counts as a hung detector: the worker
+  /// is restarted and the user is told, instead of detection stopping silently.
+  /// GPU setup happens while loading, not here, so this can be generous.
+  final Duration detectionTimeout;
+
   /// When true, metrics are logged and debug overlays may be shown.
   final bool evaluationMode;
 
@@ -139,6 +145,7 @@ class AppSettings {
     'showDebugOverlay': showDebugOverlay,
     'metricsFlushIntervalMs': metricsFlushInterval.inMilliseconds,
     'deviceSampleIntervalMs': deviceSampleInterval.inMilliseconds,
+    'detectionTimeoutMs': detectionTimeout.inMilliseconds,
     'evaluationMode': evaluationMode,
   };
 
@@ -162,6 +169,7 @@ class AppSettings {
     bool? showDebugOverlay,
     Duration? metricsFlushInterval,
     Duration? deviceSampleInterval,
+    Duration? detectionTimeout,
     bool? evaluationMode,
   }) {
     return AppSettings(
@@ -186,6 +194,7 @@ class AppSettings {
       showDebugOverlay: showDebugOverlay ?? this.showDebugOverlay,
       metricsFlushInterval: metricsFlushInterval ?? this.metricsFlushInterval,
       deviceSampleInterval: deviceSampleInterval ?? this.deviceSampleInterval,
+      detectionTimeout: detectionTimeout ?? this.detectionTimeout,
       evaluationMode: evaluationMode ?? this.evaluationMode,
     );
   }
