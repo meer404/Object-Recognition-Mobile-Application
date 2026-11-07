@@ -295,6 +295,11 @@ _None yet. Paste one probe report per device here._
 - **Release risk:** `assets/audio/local/` is bundled into every build made on
   a machine that has the file. Empty it before building anything for other
   people, including the user study.
+- **Update (2026-11-07):** the full test set of 48 clips (D-020) was generated the
+  same way, using about 400 characters of the free quota. It is also git-ignored
+  and is listed by `assets/audio/local/manifest.json`, which only debug builds
+  read. Release builds would still bundle the files, so the release-risk note
+  above applies to them too.
 - **For the paper:** any synthetic audio used must be reported as synthetic,
   with its voice and model version.
 
@@ -358,4 +363,66 @@ _None yet. Paste one probe report per device here._
   must repeat this check after adding `flutter_litert`.
 - **Unverified:** that the camera opens correctly on a real phone with these
   removed. It should, since none is needed without video recording.
+
+## D-019 — Detector implementation
+- **Date:** 2026-11-07 · **Phase:** 3 · **Status:** accepted (plan approved by
+  author); the model and input size are provisional until Phase 4 measures them
+  on a phone
+- **Model:** `yolo26n_320_fp32.tflite` (9.9 MB, D-012) via `flutter_litert` 3.10.0.
+  **Git-ignored**, chosen by the author until the AGPL-3.0 weights are confirmed
+  with the supervisor. A fresh clone must run `tools/export_model.py` and copy the
+  file into `assets/models/`; without it the app shows a Sorani error, and the
+  real-model tests skip.
+- **Model I/O, confirmed against the file (not only the docs):** input float32
+  NCHW `[1, 3, 320, 320]`, RGB, 0–1. Output `[1, 84, 2100]`: centre x, y, width,
+  height normalized to the input, then 80 class scores already in 0–1. NMS is
+  our job.
+- **Bilinear, not nearest:** compared with bilinear on 128 COCO images (PIL, same
+  model), nearest-neighbour matched 88.5 % of detections at conf ≥ 0.25 and 91.7 %
+  at conf ≥ 0.5. Box averaging matched 94.0 % / 96.9 %. Bilinear reads 4× as many
+  pixels per output pixel, and its real cost on a phone is unmeasured.
+- **Isolate:** one long-lived worker does preprocessing, inference and
+  postprocessing, and owns the interpreter because GPU delegates are bound to the
+  thread that creates them. `IsolateInterpreter` alone would leave preprocessing
+  on the UI isolate. If the worker dies, the waiting frame fails rather than
+  hanging the FrameScheduler.
+- **Accelerators:** Android GPU delegate with precision loss allowed (fp16), iOS
+  Metal, then XNNPACK, then plain CPU. **Which of these really works on a phone
+  is unverified.** The Core ML delegate is not used yet.
+- **Rotation:** a frame taller than it is wide is treated as already upright, since
+  the app is portrait-locked. Android is expected to deliver landscape sensor
+  frames; iOS behaviour is unverified, and the rule holds either way.
+- **Evidence so far:** tests run the real model through the real Dart code on a
+  real photo, on Windows. As an upright BGRA frame and as a rotated YUV frame, it
+  finds every reference object above 0.5 (same class, IoU ≥ 0.8). Resizing is
+  within 2/255 of `cv2.INTER_LINEAR`, and decoding matches an independent Python
+  decode of real output. The YUV frame is simulated: a real camera's colour range
+  and strides are still unverified.
+- **Sensitivity to note in the paper:** one person's confidence ranged from 0.56 to
+  0.75 between the `.pt` and `.tflite` runs at 320, partly from padding and resizing.
+  Evaluate through the app's own preprocessing, not Ultralytics' defaults.
+
+## D-020 — Announcing and sentences
+- **Date:** 2026-11-07 · **Phase:** 3 · **Status:** accepted (approved by author);
+  wording awaits native-speaker review
+- **Sentences:** at most 3 objects by confidence × box area. Only the main object
+  has a position, by the author's choice. Each class is named once. Centre uses
+  «لەبەردەمت» from CLAUDE.md's template, so «لە ناوەڕاست» from its position list is
+  currently unused; the review sheet asks which is right. Repeat with nothing
+  confirmed says «هیچ شتێک نەناسرایەوە» rather than staying silent.
+- **«ـیش» is a whole recorded word** (`class_<id>_also`), not a suffix clip. The set
+  is 48 clips: 20 × 2 word forms plus 8 pieces.
+- **Tracks:** a detection continues a track of its class at IoU ≥ 0.3. Confirmation
+  is per track, so two chairs are two objects.
+- **Definitions that go beyond CLAUDE.md:**
+  - "Disappeared" means no hits in the whole N-of-M window. Merely dropping below
+    N keeps its cooldown, or flicker around the threshold would repeat forever.
+  - A position changes only once the centre is 0.05 past a boundary (hysteresis).
+  - New objects are only announced while speech is idle, and stay due until spoken.
+- **Known limits:** tracking matches by overlap only, so an object moving fast
+  between frames counts as new and is re-announced. An object that leaves for
+  about a second and returns is announced again, as CLAUDE.md's rule says, which
+  may feel chatty. Neither has been tried with users.
+- **Metrics:** `RecognitionPipeline` reports `FrameMetrics` per frame. Frame-to-speech
+  runs from frame arrival to `speak()` starting. Writing them to CSV is Phase 4.
 

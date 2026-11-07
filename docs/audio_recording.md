@@ -4,12 +4,11 @@ Recorded clips are the **primary** speech path (CLAUDE.md, D-007). Their
 quality directly limits how intelligible the app is, so record them
 consistently and document every session.
 
-> **Do not record the full set yet.** The list of phrase pieces depends on
-> the class list (Phase 1C) and the sentence builder (Phase 3). For example,
-> the template «پەرداخێک و کورسییەکیش دەبینرێن» attaches «ـیش» to the last
-> noun, so joining separately recorded words could sound choppy. The
-> inventory below will be finalised then. For now, record only the test
-> sentence so the playback path can be tried on a real device.
+> **Have a native speaker review the wording first.** The recording list is now
+> fixed in code: `allClipTexts()` in `lib/speech/kurdish_labels.dart` gives all 48
+> clips, and the wording is in `docs/kurdish_labels.md`. Recording before the review
+> risks doing it twice. Words joined from separate clips may also still sound
+> choppy; try the sentence examples on a phone before recording everything.
 
 > **Synthetic clips are for evaluation only, for now.** A test clip from
 > kurdishtts.com lives in the git-ignored `assets/audio/local/`. Under the free
@@ -48,14 +47,14 @@ ffmpeg -i master.wav -af "silenceremove=start_periods=1:start_threshold=-50dB,lo
 
 ## 4. Naming and the manifest
 - Files go in `assets/audio/`. Names: lowercase ASCII, snake_case.
-  - Object classes: `<class_id>.m4a` (CLAUDE.md), with key `class_<id>`.
-    Each class probably needs its **indefinite** form recorded
-    (e.g. مێزێک); final decision in Phase 3.
-  - Phrase pieces: an English key describing the meaning, e.g.
-    `in_front_of_you.m4a` for «لەبەردەمت».
+  - Object classes need two clips: the indefinite form, `<class_id>.m4a`
+    with key `class_<id>` (e.g. مێزێک), and the «ـیش» form,
+    `<class_id>_also.m4a` with key `class_<id>_also` (e.g. مێزێکیش).
+  - Phrase pieces use the keys in `allClipTexts()`, e.g. `in_front.m4a` for
+    «لەبەردەمت».
 - Add every file to `assets/audio/manifest.json`:
   ```json
-  { "version": 1, "clips": { "class_60": "60.m4a", "in_front_of_you": "in_front_of_you.m4a" } }
+  { "version": 1, "clips": { "class_60": "60.m4a", "in_front": "in_front.m4a" } }
   ```
 - A unit test (`test/speech/clip_manifest_test.dart`) fails if the manifest
   points to a file that does not exist.

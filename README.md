@@ -17,8 +17,8 @@ device.
 | 1B | YOLO26n export, inference plugin (`flutter_litert`) | done |
 | 1C | 20 object classes with draft Sorani labels | done, native-speaker review pending |
 | 2 | Camera, frame scheduler, main screen, gestures | done, device test pending |
-| 3 | On-device detection, tracking, Sorani sentences | next |
-| 4–5 | Optimisation, evaluation | planned |
+| 3 | On-device detection, tracking, Sorani sentences | done, device test pending |
+| 4–5 | Optimisation, evaluation | next |
 
 ## Build and test
 Requires Flutter (stable channel). Android API 24+, iOS 13+.
@@ -29,6 +29,11 @@ flutter analyze
 flutter test
 flutter run            # on a real device; in debug builds, Settings has a "Speech probe"
 ```
+
+The model file is not in this repository (AGPL-3.0 weights, `docs/decisions.md`
+D-019). To enable detection, run the export in `tools/README.md` and copy
+`build/models/yolo26n_320_fp32.tflite` into `assets/models/`. Without it, the app
+shows an error and the tests that need it skip.
 
 ## Documentation
 - [`CLAUDE.md`](CLAUDE.md): project rules, architecture and scope
