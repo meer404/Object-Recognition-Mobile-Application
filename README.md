@@ -19,7 +19,7 @@ device.
 | 2 | Camera, frame scheduler, main screen, gestures | done, device test pending |
 | 3 | On-device detection, tracking, Sorani sentences | done, device test pending |
 | 4 | Metrics logging and export | logger done; on-device profiling pending |
-| 5 | Evaluation | planned |
+| 5 | Evaluation tooling and methodology | tools done; needs labelled photos, phone sessions, ethics approval |
 
 ## Build and test
 Requires Flutter (stable channel). Android API 24+, iOS 13+.

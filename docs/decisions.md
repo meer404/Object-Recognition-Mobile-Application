@@ -505,3 +505,29 @@ _None yet. Paste one probe report per device here._
     other audio but not the screen reader. Behaviour on a real phone is unknown.
   - Evaluation mode is not remembered across restarts (D-021).
 
+## D-023 — Evaluation tooling
+- **Date:** 2026-11-08 · **Phase:** 5 · **Status:** accepted (plan approved by
+  author); not yet run on real data
+- **Predictions from the app's own code (author's choice):**
+  `tool/eval/predict_test.dart` runs the real `YoloDetector` on each photo on a
+  laptop, through the same preprocessing, NMS and class filter as the phone, and
+  not a Python reimplementation, because D-019 found preprocessing shifts
+  confidence by up to about 0.2. Photos are EXIF-rotated upright and scaled to a
+  longer side of 720 px (about a medium camera frame), using the `image` package.
+  The candidate floor is 0.001 so AP sees the whole curve. The laptop uses fp32
+  on CPU, the phone's GPU fp16, so small differences remain (to spot-check).
+- **Metrics (`tools/evaluate.py`):** precision, recall, false positives and
+  misses **at the speaking threshold 0.5**, because that is what users hear,
+  plus AP@0.5 and mAP@0.5 with Ultralytics' method. Tests confirm it equals
+  Ultralytics' `compute_ap` on 50 random curves, and that a perfect detector
+  scores 0.995. Bug found by tests: a labelled class with no predictions must
+  score 0, not the 0.5 produced by the curve padding.
+- **Split (`tools/split_dataset.py`):** groups by dHash (≤ 8 of 64 bits) and by
+  capture folder, then splits whole groups 70/15/15 with a seed. The threshold
+  comes from synthetic scenes (near-copies 0–7 bits apart, distinct scenes ≥ 9).
+  Because real photos may differ, the report lists similar pairs that crossed
+  splits.
+- **Charts:** box plots per stage (P25–P75, median, whiskers P5–P95), with
+  colours from the validated categorical order. Every box is named on its axis.
+- **Labels:** YOLO .txt with COCO class ids (author's choice).
+
