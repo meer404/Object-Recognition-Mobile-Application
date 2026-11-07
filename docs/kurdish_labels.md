@@ -63,6 +63,7 @@ Draft wording. Examples: «لەبەردەمت مێزێک هەیە.» · «لای
 | permissionDenied | ڕێگەی بەکارهێنانی کامێرا نەدراوە. لە ڕێکخستنەکانی مۆبایلەکەت ڕێگە بدە، پاشان پەنجە لە شاشەکە بدە بۆ هەوڵدانەوە. | "Camera permission was not given. Allow it in your phone's settings, then touch the screen to try again." | ☐ |
 | noCamera | هیچ کامێرایەک نەدۆزرایەوە. پەنجە لە شاشەکە بدە بۆ هەوڵدانەوە. | "No camera was found. Touch the screen to try again." | ☐ |
 | cameraError | هەڵەیەک لە کامێرادا ڕوویدا. پەنجە لە شاشەکە بدە بۆ هەوڵدانەوە. | "A camera error occurred. Touch the screen to try again." | ☐ |
+| modelError | ناسینەوەی شتەکان نەیتوانی دەست پێ بکات. پەنجە لە شاشەکە بدە بۆ هەوڵدانەوە. | "Object recognition could not start. Touch the screen to try again." | ☐ |
 | repeatAction | دووبارەکردنەوە | "Repeat" (screen-reader action) | ☐ |
 | retryAction | هەوڵدانەوە | "Try again" (screen-reader action) | ☐ |
 | pauseAction | ڕاگرتن | "Pause" (screen-reader action) | ☐ |

@@ -29,7 +29,7 @@ class AudioClipSpeech implements SpeechService {
   /// Production wiring: just_audio + the bundled manifest.
   factory AudioClipSpeech.standard() => AudioClipSpeech(
     player: JustAudioClipPlayer(),
-    loadManifest: () => ClipManifest.load(rootBundle),
+    loadManifest: () => ClipManifest.loadForBuild(rootBundle),
   );
 
   final ClipPlayer _player;

@@ -271,6 +271,97 @@ void main() {
     });
   });
 
+  group('detection hooks', () {
+    late List<String> events;
+    Object? prepareError;
+
+    AppController hooked() => AppController(
+      camera: camera,
+      haptics: haptics,
+      setKeepAwake: (bool on) async {},
+      onFrame: (CameraFrame frame) async {},
+      prepare: () async {
+        events.add('prepare');
+        if (prepareError != null) throw prepareError!;
+      },
+      onStopped: () => events.add('stopped'),
+      onDispose: () async => events.add('disposed'),
+      onSettingsChanged: (_) => events.add('settings'),
+    );
+
+    setUp(() {
+      events = <String>[];
+      prepareError = null;
+    });
+
+    test('prepares before opening the camera', () async {
+      final AppController a = hooked();
+      await a.start();
+      expect(events, <String>['prepare']);
+      expect(a.status, AppStatus.running);
+    });
+
+    test('a failed prepare is a model error, and no camera opens', () async {
+      prepareError = StateError('no model');
+      final AppController a = hooked();
+      await a.start();
+      expect(a.status, AppStatus.modelError);
+      expect(camera.calls, isEmpty);
+      expect(a.showPreview, isFalse);
+    });
+
+    test('a tap retries after a model error', () async {
+      prepareError = StateError('no model');
+      final AppController a = hooked();
+      await a.start();
+      prepareError = null;
+      await a.primaryAction();
+      expect(a.status, AppStatus.running);
+    });
+
+    test('pausing and backgrounding tell the pipeline to stop', () async {
+      final AppController a = hooked();
+      await a.start();
+      await a.togglePause();
+      expect(events, contains('stopped'));
+
+      events.clear();
+      await a.togglePause();
+      a.handleLifecycle(AppLifecycleState.paused);
+      await settle();
+      expect(events, contains('stopped'));
+    });
+
+    test('a lost detector stops the camera and is reported', () async {
+      final AppController a = hooked();
+      await a.start();
+      a.reportDetectorLost();
+      await settle();
+      expect(a.status, AppStatus.modelError);
+      expect(camera.streaming, isFalse);
+      expect(events, contains('stopped'));
+    });
+
+    test('a lost detector is ignored unless running', () async {
+      final AppController a = hooked();
+      await a.start();
+      await a.togglePause();
+      a.reportDetectorLost();
+      await settle();
+      expect(a.status, AppStatus.paused);
+    });
+
+    test('settings changes and dispose reach the pipeline', () async {
+      final AppController a = hooked();
+      await a.start();
+      a.updateSettings(a.settings.copyWith(speechVolume: 0.5));
+      expect(events, contains('settings'));
+      a.dispose();
+      await settle();
+      expect(events.last, 'disposed');
+    });
+  });
+
   group('ordering', () {
     test('overlapping requests never run camera calls at once', () async {
       camera.initializeGate = Completer<void>();

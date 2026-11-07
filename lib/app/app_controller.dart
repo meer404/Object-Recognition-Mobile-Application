@@ -8,6 +8,7 @@ import '../accessibility/haptics.dart';
 import '../camera/camera_frame.dart';
 import '../camera/camera_service.dart';
 import '../camera/frame_scheduler.dart';
+import '../detection/object_detector.dart';
 import '../settings/app_settings.dart';
 
 /// High-level app state.
@@ -18,14 +19,17 @@ enum AppStatus {
   permissionDenied,
   noCamera,
   error,
+
+  /// The detection model is missing or could not be run.
+  modelError,
 }
 
 /// Orchestrates the pipeline:
 /// CameraStream → FrameScheduler → Detector → DetectionFilter & Tracker
 /// → PhraseBuilder → SpeechOutput.
 ///
-/// Phase 2 covers the camera and user controls. [onFrame] and [onRepeat] are
-/// where Phase 3 connects detection and speech.
+/// This class owns the camera and user controls; the RecognitionPipeline does
+/// the rest, connected through the callbacks.
 class AppController extends ChangeNotifier {
   AppController({
     required CameraService camera,
@@ -35,10 +39,19 @@ class AppController extends ChangeNotifier {
     AppSettings settings = const AppSettings(),
     MonotonicClock? clock,
     VoidCallback? onRepeat,
+    Future<void> Function()? prepare,
+    VoidCallback? onStopped,
+    void Function(AppSettings settings)? onSettingsChanged,
+    Future<void> Function()? onDispose,
+    this.detectionOutput,
   }) : _camera = camera,
        _haptics = haptics,
        _setKeepAwake = setKeepAwake,
        _onRepeat = onRepeat,
+       _prepare = prepare,
+       _onStopped = onStopped,
+       _onSettingsChanged = onSettingsChanged,
+       _onDispose = onDispose,
        _settings = settings {
     scheduler = FrameScheduler(
       settings: settings,
@@ -52,6 +65,17 @@ class AppController extends ChangeNotifier {
   final Haptics _haptics;
   final Future<void> Function(bool enabled) _setKeepAwake;
   final VoidCallback? _onRepeat;
+
+  /// Loads the model and speech; runs before the camera opens, on every start.
+  final Future<void> Function()? _prepare;
+
+  /// Called whenever frames stop reaching the pipeline.
+  final VoidCallback? _onStopped;
+  final void Function(AppSettings settings)? _onSettingsChanged;
+  final Future<void> Function()? _onDispose;
+
+  /// The latest detector result, for the debug overlay.
+  final ValueListenable<DetectionOutput?>? detectionOutput;
 
   late final FrameScheduler scheduler;
   late final StreamSubscription<CameraFrame> _frames;
@@ -79,6 +103,7 @@ class AppController extends ChangeNotifier {
   void updateSettings(AppSettings value) {
     _settings = value;
     scheduler.settings = value;
+    _onSettingsChanged?.call(value);
     notifyListeners();
   }
 
@@ -94,6 +119,7 @@ class AppController extends ChangeNotifier {
       case AppStatus.permissionDenied:
       case AppStatus.noCamera:
       case AppStatus.error:
+      case AppStatus.modelError:
         await start();
       case AppStatus.initializing:
       case AppStatus.paused:
@@ -104,6 +130,7 @@ class AppController extends ChangeNotifier {
   /// The double tap: pause or resume. Ignored in any other state.
   Future<void> togglePause() => _enqueue(() async {
     if (_status == AppStatus.running) {
+      _onStopped?.call();
       await _camera.stop();
       await _setKeepAwake(false);
       _setStatus(AppStatus.paused);
@@ -112,6 +139,22 @@ class AppController extends ChangeNotifier {
       await _startStreaming(announceStart: true);
     }
   });
+
+  /// The detector died mid-run. Stops the camera and says so, rather than
+  /// carrying on silently; a tap retries.
+  void reportDetectorLost() {
+    unawaited(
+      _enqueue(() async {
+        if (_status != AppStatus.running) return;
+        _onStopped?.call();
+        await _guarded(() async {
+          await _camera.stop();
+          await _setKeepAwake(false);
+          _setStatus(AppStatus.modelError);
+        });
+      }),
+    );
+  }
 
   /// Releases the camera when the app leaves the screen and restores it on
   /// return. `inactive` is deliberately ignored: the permission dialog and
@@ -139,6 +182,21 @@ class AppController extends ChangeNotifier {
   Future<void> _open({required bool announceStart}) async {
     _cameraReleased = false;
     _setStatus(AppStatus.initializing);
+    final Future<void> Function()? prepare = _prepare;
+    if (prepare != null) {
+      try {
+        await prepare();
+      } catch (error, stackTrace) {
+        developer.log(
+          'could not prepare detection or speech',
+          name: 'app',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        _setStatus(AppStatus.modelError);
+        return;
+      }
+    }
     await _guarded(() async {
       await _camera.initialize();
       await _startStreaming(announceStart: announceStart);
@@ -159,6 +217,7 @@ class AppController extends ChangeNotifier {
     if (_cameraReleased) return;
     if (_status != AppStatus.running && _status != AppStatus.paused) return;
     _cameraReleased = true;
+    _onStopped?.call();
     notifyListeners(); // Removes the preview before its controller goes away.
     await _guarded(() async {
       await _setKeepAwake(false);
@@ -184,6 +243,7 @@ class AppController extends ChangeNotifier {
       case AppStatus.permissionDenied:
       case AppStatus.noCamera:
       case AppStatus.error:
+      case AppStatus.modelError:
         // The user may have just granted permission in the system settings.
         await _open(announceStart: true);
       case AppStatus.initializing:
@@ -228,7 +288,12 @@ class AppController extends ChangeNotifier {
     unawaited(_frames.cancel());
     unawaited(_setKeepAwake(false));
     // Runs after any operation already in progress.
-    unawaited(_queue.then((_) => _camera.dispose()));
+    unawaited(
+      _queue.then((_) async {
+        await _camera.dispose();
+        await _onDispose?.call();
+      }),
+    );
     super.dispose();
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Maps clip keys (e.g. `class_56`, `in_front_of_you`) to audio files under
@@ -41,10 +42,28 @@ class ClipManifest {
   static const int supportedVersion = 1;
   static const String audioRoot = 'assets/audio/';
   static const String manifestAssetPath = '${audioRoot}manifest.json';
+  static const String localManifestAssetPath =
+      '${audioRoot}local/manifest.json';
 
   /// Loads the manifest from the asset bundle.
   static Future<ClipManifest> load(AssetBundle bundle) async =>
       ClipManifest.fromJson(await bundle.loadString(manifestAssetPath));
+
+  /// Loads the manifest for this build. Debug builds also merge the optional
+  /// git-ignored [localManifestAssetPath], for evaluation-only clips that must
+  /// never be published (decisions.md D-015).
+  static Future<ClipManifest> loadForBuild(AssetBundle bundle) async {
+    final ClipManifest manifest = await load(bundle);
+    if (!kDebugMode) return manifest;
+    final String source;
+    try {
+      source = await bundle.loadString(localManifestAssetPath);
+    } on FlutterError {
+      return manifest; // No local clips on this machine.
+    }
+    final ClipManifest local = ClipManifest.fromJson(source);
+    return manifest.withClips(local._clips);
+  }
 
   final Map<String, String> _clips;
 

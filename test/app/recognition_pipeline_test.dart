@@ -236,14 +236,17 @@ void main() {
       expect(speech.spoken, hasLength(3));
     });
 
-    test('restarts the cooldown, so it is not said again right after', () async {
-      await see(<DetectionResult>[_det(_table)], count: 2);
-      now = now.add(const Duration(seconds: 4));
-      pipeline.repeat();
-      now = now.add(const Duration(seconds: 2));
-      await see(<DetectionResult>[_det(_table)]);
-      expect(speech.spoken, hasLength(2));
-    });
+    test(
+      'restarts the cooldown, so it is not said again right after',
+      () async {
+        await see(<DetectionResult>[_det(_table)], count: 2);
+        now = now.add(const Duration(seconds: 4));
+        pipeline.repeat();
+        now = now.add(const Duration(seconds: 2));
+        await see(<DetectionResult>[_det(_table)]);
+        expect(speech.spoken, hasLength(2));
+      },
+    );
 
     test('says so when nothing is confirmed', () async {
       await see(<DetectionResult>[_det(_table)]);

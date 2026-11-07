@@ -29,6 +29,11 @@ abstract final class UiStrings {
   static const String cameraError =
       'هەڵەیەک لە کامێرادا ڕوویدا. پەنجە لە شاشەکە بدە بۆ هەوڵدانەوە.';
 
+  // REVIEW — "Object recognition could not start. Touch the screen to try
+  // again."
+  static const String modelError =
+      'ناسینەوەی شتەکان نەیتوانی دەست پێ بکات. پەنجە لە شاشەکە بدە بۆ هەوڵدانەوە.';
+
   // REVIEW — "Repeat" (screen-reader action)
   static const String repeatAction = 'دووبارەکردنەوە';
 
@@ -60,6 +65,7 @@ abstract final class UiStrings {
     permissionDenied,
     noCamera,
     cameraError,
+    modelError,
     repeatAction,
     retryAction,
     pauseAction,

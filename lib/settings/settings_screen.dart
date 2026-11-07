@@ -42,13 +42,14 @@ class SettingsScreen extends StatelessWidget {
                 children: <Widget>[
                   ListenableBuilder(
                     listenable: controller,
-                    builder: (BuildContext context, Widget? _) => SwitchListTile(
-                      title: const Text('Detection boxes (debug)'),
-                      value: controller.settings.showDebugOverlay,
-                      onChanged: (bool on) => controller.updateSettings(
-                        controller.settings.copyWith(showDebugOverlay: on),
-                      ),
-                    ),
+                    builder: (BuildContext context, Widget? _) =>
+                        SwitchListTile(
+                          title: const Text('Detection boxes (debug)'),
+                          value: controller.settings.showDebugOverlay,
+                          onChanged: (bool on) => controller.updateSettings(
+                            controller.settings.copyWith(showDebugOverlay: on),
+                          ),
+                        ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16),

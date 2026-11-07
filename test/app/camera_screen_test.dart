@@ -4,10 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kurdish_vision/app/app_controller.dart';
 import 'package:kurdish_vision/app/app_theme.dart';
 import 'package:kurdish_vision/app/camera_screen.dart';
+import 'package:kurdish_vision/app/debug_overlay.dart';
 import 'package:kurdish_vision/app/sorani_localizations.dart';
 import 'package:kurdish_vision/app/ui_strings.dart';
 import 'package:kurdish_vision/camera/camera_frame.dart';
 import 'package:kurdish_vision/camera/camera_service.dart';
+import 'package:kurdish_vision/detection/object_detector.dart';
 import 'package:kurdish_vision/settings/settings_screen.dart';
 
 import '../support/fakes.dart';
@@ -20,11 +22,15 @@ void main() {
   late FakeHaptics haptics;
   late int repeats;
   late AppController app;
+  Future<void> Function()? prepare;
+  ValueNotifier<DetectionOutput?>? overlayOutput;
 
   setUp(() {
     camera = FakeCameraService();
     haptics = FakeHaptics();
     repeats = 0;
+    prepare = null;
+    overlayOutput = null;
   });
 
   Future<void> pumpScreen(WidgetTester tester) async {
@@ -35,6 +41,8 @@ void main() {
       setKeepAwake: (bool on) async {},
       onRepeat: () => repeats++,
       onFrame: (CameraFrame frame) async {},
+      prepare: prepare,
+      detectionOutput: overlayOutput,
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -136,6 +144,37 @@ void main() {
       await app.start();
       await tester.pumpAndSettle();
       expect(find.text(UiStrings.cameraError), findsOneWidget);
+    });
+
+    testWidgets('a model failure explains itself and offers retry', (
+      WidgetTester tester,
+    ) async {
+      Object? failure = StateError('no model');
+      prepare = () async {
+        final Object? current = failure;
+        if (current != null) throw current;
+      };
+      await pumpScreen(tester);
+      expect(find.text(UiStrings.modelError), findsOneWidget);
+      expect(find.byKey(const Key('fake-preview')), findsNothing);
+
+      failure = null;
+      await tester.tap(find.byType(CameraScreen));
+      await tester.pump(_pastDoubleTapWindow);
+      await tester.pumpAndSettle();
+      expect(app.status, AppStatus.running);
+    });
+
+    testWidgets('the debug overlay is off by default', (
+      WidgetTester tester,
+    ) async {
+      overlayOutput = ValueNotifier<DetectionOutput?>(null);
+      await pumpScreen(tester);
+      expect(find.byType(DebugOverlay), findsNothing);
+
+      app.updateSettings(app.settings.copyWith(showDebugOverlay: true));
+      await tester.pumpAndSettle();
+      expect(find.byType(DebugOverlay), findsOneWidget);
     });
 
     testWidgets('tap retries after a failure', (WidgetTester tester) async {

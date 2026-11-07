@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../camera/camera_frame.dart';
 import '../detection/detection_filter.dart';
+import '../detection/detection_result.dart';
 import '../detection/object_detector.dart';
 import '../detection/tracker.dart';
 import '../detection/yolo_detector.dart';
@@ -108,7 +109,7 @@ class RecognitionPipeline {
     final FilterResult? result = _latest;
     final List<TrackedDetection> confirmed =
         result?.confirmed ?? const <TrackedDetection>[];
-    final Phrase? phrase = _phrases.build(<DetectionResultOf>[
+    final Phrase? phrase = _phrases.build(<DetectionResult>[
       for (final TrackedDetection t in confirmed) t.detection,
     ], interrupt: true);
     if (phrase == null) {
@@ -144,7 +145,7 @@ class RecognitionPipeline {
 
   SpeechRequest? _announceDue(FilterResult result, DateTime now) {
     final List<TrackedDetection> due = _tracker.objectsToAnnounce(result, now);
-    final Phrase? phrase = _phrases.build(<DetectionResultOf>[
+    final Phrase? phrase = _phrases.build(<DetectionResult>[
       for (final TrackedDetection t in due) t.detection,
     ]);
     if (phrase == null) return null;
@@ -164,24 +165,26 @@ class RecognitionPipeline {
     DetectionOutput? output,
   ) {
     unawaited(
-      _speech.speak(request).then(
-        (SpeechOutcome outcome) {
-          if (frame == null || output == null) return;
-          final double? latency = outcome == SpeechOutcome.started
-              ? _now().difference(frame.timestamp).inMicroseconds / 1000
-              : null;
-          _report(frame, output, frameToSpeechStartMs: latency);
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          developer.log(
-            'speech failed',
-            name: 'pipeline',
-            error: error,
-            stackTrace: stackTrace,
-          );
-          if (frame != null && output != null) _report(frame, output);
-        },
-      ),
+      _speech
+          .speak(request)
+          .then(
+            (SpeechOutcome outcome) {
+              if (frame == null || output == null) return;
+              final double? latency = outcome == SpeechOutcome.started
+                  ? _now().difference(frame.timestamp).inMicroseconds / 1000
+                  : null;
+              _report(frame, output, frameToSpeechStartMs: latency);
+            },
+            onError: (Object error, StackTrace stackTrace) {
+              developer.log(
+                'speech failed',
+                name: 'pipeline',
+                error: error,
+                stackTrace: stackTrace,
+              );
+              if (frame != null && output != null) _report(frame, output);
+            },
+          ),
     );
   }
 

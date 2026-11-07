@@ -6,6 +6,7 @@ import 'package:flutter/semantics.dart';
 import '../accessibility/accessibility_controls.dart';
 import '../settings/settings_screen.dart';
 import 'app_controller.dart';
+import 'debug_overlay.dart';
 import 'ui_strings.dart';
 
 /// The main screen: a full-screen camera preview controlled by whole-screen
@@ -64,9 +65,9 @@ class _CameraScreenState extends State<CameraScreen>
     final bool wasRunning = _app.status == AppStatus.running;
     if (wasRunning) await _app.togglePause();
     if (!mounted) return;
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => SettingsScreen(controller: _app)),
+    );
     if (wasRunning && _app.status == AppStatus.paused) {
       await _app.togglePause();
     }
@@ -79,13 +80,15 @@ class _CameraScreenState extends State<CameraScreen>
     AppStatus.permissionDenied => UiStrings.permissionDenied,
     AppStatus.noCamera => UiStrings.noCamera,
     AppStatus.error => UiStrings.cameraError,
+    AppStatus.modelError => UiStrings.modelError,
   };
 
   static String? _tapHint(AppStatus status) => switch (status) {
     AppStatus.running => UiStrings.repeatAction,
     AppStatus.permissionDenied ||
     AppStatus.noCamera ||
-    AppStatus.error => UiStrings.retryAction,
+    AppStatus.error ||
+    AppStatus.modelError => UiStrings.retryAction,
     AppStatus.initializing || AppStatus.paused => null,
   };
 
@@ -114,6 +117,10 @@ class _CameraScreenState extends State<CameraScreen>
               fit: StackFit.expand,
               children: <Widget>[
                 if (_app.showPreview) _app.camera.buildPreview(),
+                if (_app.showPreview &&
+                    _app.settings.showDebugOverlay &&
+                    _app.detectionOutput != null)
+                  DebugOverlay(output: _app.detectionOutput!),
                 // While running the preview speaks for itself; a label over it
                 // could also be read as a claim about what is in view.
                 if (status != AppStatus.running)

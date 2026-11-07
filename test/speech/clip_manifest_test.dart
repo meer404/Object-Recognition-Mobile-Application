@@ -1,7 +1,30 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kurdish_vision/speech/clip_manifest.dart';
+
+class _Bundle extends CachingAssetBundle {
+  _Bundle(this.assets);
+
+  final Map<String, String> assets;
+
+  @override
+  Future<ByteData> load(String key) async {
+    final String? text = assets[key];
+    if (text == null) throw FlutterError('asset not found: $key');
+    return ByteData.sublistView(utf8.encode(text));
+  }
+
+  @override
+  Future<String> loadString(String key, {bool cache = true}) async {
+    final String? text = assets[key];
+    if (text == null) throw FlutterError('asset not found: $key');
+    return text;
+  }
+}
 
 void main() {
   test('parses clips and resolves keys in order', () {
@@ -35,6 +58,32 @@ void main() {
       'assets/audio/local/b.mp3',
     ]);
     expect(base.contains('b'), isFalse);
+  });
+
+  group('loadForBuild', () {
+    const String base = '{"version": 1, "clips": {"a": "a.m4a", "b": "b.m4a"}}';
+
+    test('uses the base manifest when there are no local clips', () async {
+      final ClipManifest m = await ClipManifest.loadForBuild(
+        _Bundle(<String, String>{ClipManifest.manifestAssetPath: base}),
+      );
+      expect(m.keys, unorderedEquals(<String>['a', 'b']));
+    });
+
+    test('in debug builds, local clips add to and override it', () async {
+      final ClipManifest m = await ClipManifest.loadForBuild(
+        _Bundle(<String, String>{
+          ClipManifest.manifestAssetPath: base,
+          ClipManifest.localManifestAssetPath:
+              '{"version": 1, "clips": {"b": "local/b.mp3", "c": "local/c.mp3"}}',
+        }),
+      );
+      expect(m.resolve(<String>['a', 'b', 'c']), <String>[
+        'assets/audio/a.m4a',
+        'assets/audio/local/b.mp3',
+        'assets/audio/local/c.mp3',
+      ]);
+    });
   });
 
   test('rejects malformed manifests', () {
