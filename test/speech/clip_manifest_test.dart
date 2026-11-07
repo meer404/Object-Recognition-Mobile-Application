@@ -70,20 +70,35 @@ void main() {
       expect(m.keys, unorderedEquals(<String>['a', 'b']));
     });
 
-    test('in debug builds, local clips add to and override it', () async {
+    test('release builds never load local clips', () async {
       final ClipManifest m = await ClipManifest.loadForBuild(
         _Bundle(<String, String>{
           ClipManifest.manifestAssetPath: base,
           ClipManifest.localManifestAssetPath:
-              '{"version": 1, "clips": {"b": "local/b.mp3", "c": "local/c.mp3"}}',
+              '{"version": 1, "clips": {"c": "local/c.mp3"}}',
         }),
+        includeLocal: false,
       );
-      expect(m.resolve(<String>['a', 'b', 'c']), <String>[
-        'assets/audio/a.m4a',
-        'assets/audio/local/b.mp3',
-        'assets/audio/local/c.mp3',
-      ]);
+      expect(m.contains('c'), isFalse);
     });
+
+    test(
+      'in debug and profile builds, local clips add to and override it',
+      () async {
+        final ClipManifest m = await ClipManifest.loadForBuild(
+          _Bundle(<String, String>{
+            ClipManifest.manifestAssetPath: base,
+            ClipManifest.localManifestAssetPath:
+                '{"version": 1, "clips": {"b": "local/b.mp3", "c": "local/c.mp3"}}',
+          }),
+        );
+        expect(m.resolve(<String>['a', 'b', 'c']), <String>[
+          'assets/audio/a.m4a',
+          'assets/audio/local/b.mp3',
+          'assets/audio/local/c.mp3',
+        ]);
+      },
+    );
   });
 
   test('rejects malformed manifests', () {

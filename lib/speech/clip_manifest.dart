@@ -49,12 +49,18 @@ class ClipManifest {
   static Future<ClipManifest> load(AssetBundle bundle) async =>
       ClipManifest.fromJson(await bundle.loadString(manifestAssetPath));
 
-  /// Loads the manifest for this build. Debug builds also merge the optional
-  /// git-ignored [localManifestAssetPath], for evaluation-only clips that must
-  /// never be published (decisions.md D-015).
-  static Future<ClipManifest> loadForBuild(AssetBundle bundle) async {
+  /// Loads the manifest for this build. Debug and profile builds also merge the
+  /// optional git-ignored [localManifestAssetPath], for evaluation-only clips
+  /// that must never be published (decisions.md D-015). Profile builds need
+  /// them because only profile or release sessions count as measurements
+  /// (D-021); without clips a profile build is silent and frame-to-speech
+  /// cannot be measured. Release builds never load them.
+  static Future<ClipManifest> loadForBuild(
+    AssetBundle bundle, {
+    bool includeLocal = !kReleaseMode,
+  }) async {
     final ClipManifest manifest = await load(bundle);
-    if (!kDebugMode) return manifest;
+    if (!includeLocal) return manifest;
     final String source;
     try {
       source = await bundle.loadString(localManifestAssetPath);

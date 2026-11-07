@@ -297,8 +297,9 @@ _None yet. Paste one probe report per device here._
   people, including the user study.
 - **Update (2026-11-07):** the full test set of 48 clips (D-020) was generated the
   same way, using about 400 characters of the free quota. It is also git-ignored
-  and is listed by `assets/audio/local/manifest.json`, which only debug builds
-  read. Release builds would still bundle the files, so the release-risk note
+  and is listed by `assets/audio/local/manifest.json`, which debug and profile
+  builds read (profile since D-024's session, which was silent without it);
+  release builds never do. Release builds would still bundle the files, so the release-risk note
   above applies to them too.
 - **For the paper:** any synthetic audio used must be reported as synthetic,
   with its voice and model version.
