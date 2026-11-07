@@ -22,6 +22,12 @@ class AppSettings {
     this.speechVolume = 1.0,
     this.speechStartTimeout = const Duration(seconds: 3),
     this.cameraQuality = CameraQuality.medium,
+    this.modelInputSize = 320,
+    this.candidateConfidence = 0.25,
+    this.nmsIouThreshold = 0.7,
+    this.trackMatchIou = 0.3,
+    this.positionHysteresis = 0.05,
+    this.showDebugOverlay = false,
     this.evaluationMode = false,
   }) : assert(
          targetInferencesPerSecond >= minInferencesPerSecond &&
@@ -74,6 +80,26 @@ class AppSettings {
   /// Camera resolution tier. Frames are downscaled to the model input anyway.
   final CameraQuality cameraQuality;
 
+  /// Square model input in pixels. Must match the bundled model file (D-019).
+  final int modelInputSize;
+
+  /// Detections below this are discarded by the detector. Speech applies the
+  /// stricter [confidenceThreshold]; this keeps weaker results for evaluation.
+  final double candidateConfidence;
+
+  /// Boxes of one class overlapping more than this are merged by NMS.
+  final double nmsIouThreshold;
+
+  /// Minimum overlap for a detection to continue an existing track.
+  final double trackMatchIou;
+
+  /// How far (normalized x) a box centre must pass a region boundary before its
+  /// position changes, so an object near a boundary is not re-announced.
+  final double positionHysteresis;
+
+  /// Draws detection boxes over the preview. Debug builds only.
+  final bool showDebugOverlay;
+
   /// When true, metrics are logged and debug overlays may be shown.
   final bool evaluationMode;
 
@@ -95,6 +121,12 @@ class AppSettings {
     double? speechVolume,
     Duration? speechStartTimeout,
     CameraQuality? cameraQuality,
+    int? modelInputSize,
+    double? candidateConfidence,
+    double? nmsIouThreshold,
+    double? trackMatchIou,
+    double? positionHysteresis,
+    bool? showDebugOverlay,
     bool? evaluationMode,
   }) {
     return AppSettings(
@@ -111,6 +143,12 @@ class AppSettings {
       speechVolume: speechVolume ?? this.speechVolume,
       speechStartTimeout: speechStartTimeout ?? this.speechStartTimeout,
       cameraQuality: cameraQuality ?? this.cameraQuality,
+      modelInputSize: modelInputSize ?? this.modelInputSize,
+      candidateConfidence: candidateConfidence ?? this.candidateConfidence,
+      nmsIouThreshold: nmsIouThreshold ?? this.nmsIouThreshold,
+      trackMatchIou: trackMatchIou ?? this.trackMatchIou,
+      positionHysteresis: positionHysteresis ?? this.positionHysteresis,
+      showDebugOverlay: showDebugOverlay ?? this.showDebugOverlay,
       evaluationMode: evaluationMode ?? this.evaluationMode,
     );
   }

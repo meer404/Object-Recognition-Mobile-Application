@@ -6,6 +6,7 @@ Python scripts for the research workflow. They are not shipped in the app.
 |---|---|---|
 | `make_placeholder_clips.py` | 1A | Tone placeholders in `assets/audio/placeholder/` (stdlib only, deterministic) |
 | `export_model.py` | 1B | Export YOLO26n to LiteRT fp16/int8 and Core ML, with a fidelity check and manifest |
+| `make_detector_fixtures.py` | 3 | Reference numbers in `test/fixtures/` for the Dart resize and decode tests |
 | `split_dataset.py` | 5 | train/val/test split with perceptual-hash de-duplication |
 | `evaluate.py` | 5 | Precision, Recall, mAP@0.5, false positives per class |
 | `analyze_metrics.py` | 5 | Median/P95 latency tables and charts from app CSV |

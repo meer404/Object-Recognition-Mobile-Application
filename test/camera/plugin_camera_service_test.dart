@@ -77,6 +77,22 @@ void main() {
     });
   });
 
+  group('uprightRotation', () {
+    test('a landscape sensor frame uses the sensor orientation', () {
+      expect(
+        uprightRotation(width: 640, height: 480, sensorOrientation: 90),
+        90,
+      );
+    });
+
+    test('a frame that is already portrait is not rotated again', () {
+      expect(
+        uprightRotation(width: 480, height: 640, sensorOrientation: 90),
+        0,
+      );
+    });
+  });
+
   group('failureFromCameraCode', () {
     test('permission codes from the plugin README', () {
       for (final String code in <String>[

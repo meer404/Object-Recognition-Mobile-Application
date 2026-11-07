@@ -49,6 +49,18 @@ model.CameraFrame? frameFromCameraImage(
   );
 }
 
+/// Rotation needed to make a frame upright, given a portrait-locked app.
+///
+/// A frame already taller than it is wide is treated as upright. Android
+/// delivers sensor (landscape) frames, but iOS may rotate its stream to the
+/// locked orientation. This is unverified on devices (D-019), and it holds
+/// whichever way each platform behaves.
+int uprightRotation({
+  required int width,
+  required int height,
+  required int sensorOrientation,
+}) => height > width ? 0 : sensorOrientation;
+
 /// Maps a `camera` plugin error code to a failure the app can explain.
 ///
 /// Codes differ by platform (see the plugin README), so this matches loosely.
@@ -85,7 +97,7 @@ class PluginCameraService implements CameraService {
       StreamController<model.CameraFrame>.broadcast();
 
   CameraController? _controller;
-  int _rotationDegrees = 0;
+  int _sensorOrientation = 0;
   bool _streaming = false;
   bool _warnedAboutFormat = false;
 
@@ -104,7 +116,7 @@ class PluginCameraService implements CameraService {
       if (camera == null) {
         throw const CameraServiceException(CameraFailure.noCamera);
       }
-      _rotationDegrees = camera.sensorOrientation;
+      _sensorOrientation = camera.sensorOrientation;
       controller = CameraController(
         camera,
         _preset(quality),
@@ -153,7 +165,11 @@ class PluginCameraService implements CameraService {
   void _onImage(CameraImage image) {
     final model.CameraFrame? frame = frameFromCameraImage(
       image,
-      rotationDegrees: _rotationDegrees,
+      rotationDegrees: uprightRotation(
+        width: image.width,
+        height: image.height,
+        sensorOrientation: _sensorOrientation,
+      ),
       timestamp: DateTime.now(),
     );
     if (frame != null) {

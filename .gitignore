@@ -48,6 +48,10 @@ app.*.map.json
 assets/audio/local/*
 !assets/audio/local/.gitkeep
 
+# AGPL-3.0 model weights stay out of the public repo until confirmed (D-019).
+# Recreate with tools/export_model.py, then copy into assets/models/.
+assets/models/*.tflite
+
 # Python tooling (tools/)
 tools/.venv/
 __pycache__/
